@@ -5,12 +5,18 @@ import {
   StyleSheet,
   View,
   Text,
+  Image,
+  Dimensions,
 } from 'react-native';
-import {ScrollView} from 'react-native-gesture-handler';
+import {FlatList, ScrollView} from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import COLORS from '../../consts/colors';
+const {width} = Dimensions.get('screen');
 const DetailsScreen = ({navigation, route}) => {
   const house = route.params;
+  const InteriorImage = ({image}) => {
+    return <Image source={image} style={style.interiorImage} />;
+  };
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: COLORS.white}}>
       <ScrollView>
@@ -62,6 +68,32 @@ const DetailsScreen = ({navigation, route}) => {
             <View style={style.facility}>
               <Icon name="aspect-ratio" size={18} />
               <Text style={style.facilityText}>100</Text>
+            </View>
+          </View>
+          <Text style={{marginTop: 20, color: COLORS.grey}}>
+            {house.details}
+          </Text>
+          <FlatList
+            keyExtractor={(_, key) => key.toString()}
+            contentContainerStyle={{marginTop: 20}}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={house.interiors}
+            renderItem={({item}) => <InteriorImage image={item} />}
+          />
+          <View style={style.footer}>
+            <View>
+              <Text
+                style={{color: COLORS.blue, fontWeight: 'bold', fontSize: 18}}>
+                UGX 450,000
+              </Text>
+              <Text
+                style={{color: COLORS.grey, fontWeight: 'bold', fontSize: 10}}>
+                Monthly Rent
+              </Text>
+            </View>
+            <View style={style.bookNowBtn}>
+              <Text style={{color: COLORS.white}}>Book Now</Text>
             </View>
           </View>
         </View>
@@ -127,6 +159,30 @@ const style = StyleSheet.create({
   facilityText: {
     marginLeft: 5,
     color: COLORS.grey,
+  },
+  interiorImage: {
+    width: width / 3 - 20,
+    height: 80,
+    marginRight: 10,
+    borderRadius: 10,
+  },
+  footer: {
+    height: 70,
+    backgroundColor: COLORS.light,
+    borderRadius: 10,
+    paddingHorizontal: 20,
+    marginVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  bookNowBtn: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.dark,
+    height: 50,
+    borderRadius: 10,
+    paddingHorizontal: 20,
   },
 });
 

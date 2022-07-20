@@ -134,6 +134,7 @@ const HomeScreen = ({navigation}) => {
           <ListCategories />
         </View>
         <FlatList
+          snapToInterval={width - 20}
           contentContainerStyle={{paddingLeft: 20, paddingVertical: 20}}
           showsHorizontalScrollIndicator={false}
           horizontal

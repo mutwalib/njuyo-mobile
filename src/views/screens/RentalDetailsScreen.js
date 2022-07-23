@@ -12,7 +12,7 @@ import {FlatList, ScrollView} from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import COLORS from '../../consts/colors';
 const {width} = Dimensions.get('screen');
-const DetailsScreen = ({navigation, route}) => {
+const RentalDetailsScreen = ({navigation, route}) => {
   const house = route.params;
   const InteriorImage = ({image}) => {
     return <Image source={image} style={style.interiorImage} />;
@@ -49,10 +49,10 @@ const DetailsScreen = ({navigation, route}) => {
               {house.title}
             </Text>
             <View style={{flexDirection: 'row', alignItems: 'center'}}>
-              <View style={style.ratingTag}>
-                <Text style={{color: COLORS.white}}>4.4</Text>
+              <View style={style.bookingsTag}>
+                <Text style={{color: COLORS.white}}>100</Text>
               </View>
-              <Text style={{fontSize: 13, marginLeft: 5}}>102 Ratings</Text>
+              <Text style={{fontSize: 13, marginLeft: 5}}>Bookings</Text>
             </View>
           </View>
           <Text style={{fontSize: 15, color: COLORS.grey}}> Kawaala</Text>
@@ -144,13 +144,14 @@ const style = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 40,
   },
-  ratingTag: {
-    height: 30,
+  bookingsTag: {
+    height: 35,
     width: 35,
     backgroundColor: COLORS.blue,
-    borderRadius: 5,
+    borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 4,
   },
   facility: {
     flexDirection: 'row',
@@ -186,4 +187,4 @@ const style = StyleSheet.create({
   },
 });
 
-export default DetailsScreen;
+export default RentalDetailsScreen;

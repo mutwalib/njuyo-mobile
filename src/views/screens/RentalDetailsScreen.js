@@ -7,6 +7,7 @@ import {
   Text,
   Image,
   Dimensions,
+  Pressable,
 } from 'react-native';
 import {FlatList, ScrollView} from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -92,9 +93,11 @@ const RentalDetailsScreen = ({navigation, route}) => {
                 Monthly Rent
               </Text>
             </View>
-            <View style={style.bookNowBtn}>
-              <Text style={{color: COLORS.white}}>Book Now</Text>
-            </View>
+            <Pressable onPress={() => navigation.navigate('LoginScreen')}>
+              <View style={style.bookNowBtn}>
+                <Text style={{color: COLORS.white}}>Book Now</Text>
+              </View>
+            </Pressable>
           </View>
         </View>
       </ScrollView>

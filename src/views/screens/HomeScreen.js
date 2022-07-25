@@ -55,7 +55,8 @@ const HomeScreen = ({navigation}) => {
   };
   const Card = ({house}) => {
     return (
-      <Pressable onPress={() => navigation.navigate('DetailsScreen', house)}>
+      <Pressable
+        onPress={() => navigation.navigate('RentalDetailsScreen', house)}>
         <View style={style.card}>
           <Image source={house.image} style={style.cardImage} />
           <View

@@ -1,6 +1,6 @@
 import {Dimensions} from 'react-native';
 
-export default {
+export const ProfileStyles = {
   cardContainer: {
     flex: 1,
   },

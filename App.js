@@ -9,6 +9,7 @@ import RegisterScreen from './src/views/screens/RegisterScreen';
 import LoginScreen from './src/views/screens/LoginScreen';
 import ResetPasswordScreen from './src/views/screens/ResetPasswordScreen';
 import ProfileScreen from './src/views/screens/ProfileScreen';
+import Settings from './src/views/screens/settings/Settings';
 
 const Stack = createStackNavigator();
 
@@ -29,6 +30,7 @@ const App = () => {
           component={ResetPasswordScreen}
         />
         <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+        <Stack.Screen name="Settings" component={Settings} />
       </Stack.Navigator>
     </NavigationContainer>
   );

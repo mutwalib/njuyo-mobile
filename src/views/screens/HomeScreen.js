@@ -108,10 +108,12 @@ const HomeScreen = ({navigation}) => {
             Uganda
           </Text>
         </View>
-        <Image
-          source={require('../../assets/profile.png')}
-          style={style.profileImg}
-        />
+        <Pressable onPress={() => navigation.navigate('ProfileScreen')}>
+          <Image
+            source={require('../../assets/profile.png')}
+            style={style.profileImg}
+          />
+        </Pressable>
       </View>
       <ScrollView>
         <View
@@ -124,9 +126,11 @@ const HomeScreen = ({navigation}) => {
             <Icon name="search" size={25} color={COLORS.grey} />
             <TextInput placeholder="Search Village, City or any location" />
           </View>
-          <View style={style.sortBtn}>
-            <Icon name="tune" color={COLORS.white} size={25} />
-          </View>
+          <Pressable onPress={() => navigation.navigate('Settings')}>
+            <View style={style.sortBtn}>
+              <Icon name="tune" color={COLORS.white} size={25} />
+            </View>
+          </Pressable>
         </View>
         <View>
           <ListOptions />

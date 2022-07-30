@@ -17,10 +17,10 @@ import {
 } from 'react-native-tab-view';
 import PropTypes from 'prop-types';
 import {image} from '../../../utils/utils';
-import profileStyles from './ProfileStyle';
+import {ProfileStyles} from './ProfileStyles';
 import Posts from './Posts';
 
-const styles = StyleSheet.create({...profileStyles});
+const styles = StyleSheet.create({...ProfileStyles});
 
 class Profile extends Component {
   static propTypes = {

@@ -10,28 +10,34 @@ import LoginScreen from './src/views/screens/LoginScreen';
 import ResetPasswordScreen from './src/views/screens/ResetPasswordScreen';
 import ProfileScreen from './src/views/screens/ProfileScreen';
 import Settings from './src/views/screens/settings/Settings';
+import {Provider as PropertyProvider} from './src/context/property/PropertyContext';
+import {Provider as AuthProvider} from './src/context/auth/AuthContext';
 
 const Stack = createStackNavigator();
 
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{headerShown: false}}>
-        <Stack.Screen name="OnBoardScreen" component={OnBoardScreen} />
-        <Stack.Screen name="HomeScreen" component={HomeScreen} />
-        <Stack.Screen
-          name="RentalDetailsScreen"
-          component={RentalDetailsScreen}
-        />
-        <Stack.Screen name="LoginScreen" component={LoginScreen} />
-        <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
-        <Stack.Screen
-          name="ResetPasswordScreen"
-          component={ResetPasswordScreen}
-        />
-        <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
-        <Stack.Screen name="Settings" component={Settings} />
-      </Stack.Navigator>
+      <AuthProvider>
+        <PropertyProvider>
+          <Stack.Navigator screenOptions={{headerShown: false}}>
+            <Stack.Screen name="OnBoardScreen" component={OnBoardScreen} />
+            <Stack.Screen name="HomeScreen" component={HomeScreen} />
+            <Stack.Screen
+              name="RentalDetailsScreen"
+              component={RentalDetailsScreen}
+            />
+            <Stack.Screen name="LoginScreen" component={LoginScreen} />
+            <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
+            <Stack.Screen
+              name="ResetPasswordScreen"
+              component={ResetPasswordScreen}
+            />
+            <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+            <Stack.Screen name="Settings" component={Settings} />
+          </Stack.Navigator>
+        </PropertyProvider>
+      </AuthProvider>
     </NavigationContainer>
   );
 };

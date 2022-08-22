@@ -12,7 +12,7 @@ const SettingsComponent = ({
 }) => {
   return (
     <>
-      <AppModal
+      {/* <AppModal
         modalVisible={modalVisible}
         modalFooter={<></>}
         closeOnTouchOutside={false}
@@ -38,7 +38,7 @@ const SettingsComponent = ({
         }
         title="Sort by"
         setModalVisible={setModalVisible}
-      />
+      /> */}
       <ScrollView style={{backgroundColor: colors.white}}>
         {settingsOptions.map(({title, subTitle, onPress}, index) => (
           <TouchableOpacity key={title} onPress={onPress}>

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useContext} from 'react';
 import {View, StyleSheet, TouchableOpacity} from 'react-native';
 import {Text} from 'react-native-paper';
 import Background from '../components/Background';
@@ -11,11 +11,14 @@ import {theme} from '../../core/theme';
 import {emailValidator} from '../helpers/emailValidator';
 import {passwordValidator} from '../helpers/passwordValidator';
 import {nameValidator} from '../helpers/nameValidator';
+import {Context as AuthContext} from '../../context/auth/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function RegisterScreen({navigation}) {
   const [name, setName] = useState({value: '', error: ''});
   const [email, setEmail] = useState({value: '', error: ''});
   const [password, setPassword] = useState({value: '', error: ''});
+  const {signUp} = useContext(AuthContext);
 
   const onSignUpPressed = () => {
     const nameError = nameValidator(name.value);
@@ -26,6 +29,15 @@ export default function RegisterScreen({navigation}) {
       setEmail({...email, error: emailError});
       setPassword({...password, error: passwordError});
       return;
+    } else {
+      // signUp({email: email.toLocaleLowerCase(), password: password}).then(
+      //   result => {
+      //     if (result.status == 200) {
+      //       AsyncStorage.setItem('AccessToken', result.data.token);
+      //       navigation.replace('HomeScreen');
+      //     }
+      //   },
+      // );
     }
     navigation.reset({
       index: 0,

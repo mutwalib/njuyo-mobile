@@ -1,58 +1,58 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {useEffect} from 'react';
+import {useNavigation} from '@react-navigation/native';
 import SettingsComponent from '../../components/SettingsComponent';
 
 const Settings = () => {
   const [email, setEmail] = React.useState(null);
-  const [modalVisible, setModalVisible] = React.useState(false);
   const [sortBy, setSortBy] = React.useState(null);
-
+  const navigation = useNavigation();
   const saveSetting = (key, value) => {
     AsyncStorage.setItem(key, value);
   };
 
   const settingsOptions = [
-    {title: 'My Info', subTitle: 'Setup your profile', onPress: () => {}},
-    {title: 'Accounts', subTitle: null, onPress: () => {}},
     {
-      title: 'Default account for new contacts',
-      subTitle: email,
+      title: 'My Info',
+      subTitle: 'Set up your profile here',
+      onPress: () => {
+        navigation.navigate('ProfileScreen');
+      },
+    },
+    {
+      title: 'My Account',
+      subTitle: 'set up your Account here',
       onPress: () => {},
     },
-    {title: 'Contacts to display', subTitle: 'All contacts', onPress: () => {}},
     {
-      title: 'Sort by',
-      subTitle: sortBy,
-      onPress: () => {
-        setModalVisible(true);
-      },
-    },
-    {title: 'Name format', subTitle: 'First name first', onPress: () => {}},
-    {title: 'Import', subTitle: null, onPress: () => {}},
-    {title: 'Export', subTitle: null, onPress: () => {}},
-    {title: 'Blocked numbers', subTitle: null, onPress: () => {}},
-    {title: 'About RNContacts', subTitle: null, onPress: () => {}},
-  ];
-
-  const prefArr = [
-    {
-      name: 'First Name',
-      selected: sortBy === 'First Name',
-
-      onPress: () => {
-        saveSetting('sortBy', 'First Name');
-        setSortBy('First Name');
-        setModalVisible(false);
-      },
+      title: 'My Bookings',
+      subTitle: 'Find your booking history here',
+      onPress: () => {},
     },
     {
-      name: 'Last Name',
-      selected: sortBy === 'Last Name',
-      onPress: () => {
-        saveSetting('sortBy', 'Last Name');
-        setSortBy('Last Name');
-        setModalVisible(false);
-      },
+      title: 'My Properties',
+      subTitle: 'Find and manage your properties here',
+      onPress: () => {},
+    },
+    {
+      title: 'My Favorites',
+      subTitle: 'Find your favorites here',
+      onPress: () => {},
+    },
+    {
+      title: 'Booking Appointments',
+      subTitle: 'Find your appointments here',
+      onPress: () => {},
+    },
+    {
+      title: 'Landlord zone',
+      subTitle: 'Find your tenants and customers',
+      onPress: () => {},
+    },
+    {
+      title: 'Transaction History',
+      subTitle: 'Find your successful transactions here',
+      onPress: () => {},
     },
   ];
 
@@ -69,14 +69,7 @@ const Settings = () => {
     getSettings();
   }, []);
 
-  return (
-    <SettingsComponent
-      modalVisible={modalVisible}
-      setModalVisible={setModalVisible}
-      settingsOptions={settingsOptions}
-      prefArr={prefArr}
-    />
-  );
+  return <SettingsComponent settingsOptions={settingsOptions} />;
 };
 
 export default Settings;

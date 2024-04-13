@@ -1,7 +1,8 @@
-import api from '../../api/api';
+import api from "../../services/api/api"
 import {Property} from '../../models/property';
 import GlobalState from '../GlobalState';
 import propertyReducer, {initialState} from './PropertyReducer';
+import { ADD_PROPERTY } from './types';
 
 const createProperty =
   ({property, files}) =>

@@ -1,3 +1,5 @@
+import {black} from 'react-native-paper/lib/typescript/styles/colors';
+
 const COLORS = {
   white: '#FFF',
   dark: '#000',
@@ -22,5 +24,7 @@ const COLORS = {
   accent: '#4895ef',
   danger: '#f72585',
   success: '#4cc9f0',
+  black: '#000000',
+  activeIndicator: '#AF9A7D',
 };
 export default COLORS;

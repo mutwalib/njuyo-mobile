@@ -1,7 +1,32 @@
-import GlobalState from '../GlobalState';
 import axios from 'axios';
+import axiosInstance from '../../services/api/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import GlobalState from '../GlobalState';
+import {LOGOUT, LOCAL_LOGIN, LOGIN, SIGNUP} from './types';
+const initialState = {
+  token: null,
+  userId: null,
+};
 
+const authReducer = (state, action) => {
+  switch (action.type) {
+    case LOCAL_LOGIN:
+    case LOGIN:
+      return {
+        ...state,
+        token: action.payload.token,
+        userId: action.payload.userId,
+      };
+    case LOGOUT:
+      return {
+        ...state,
+        token: null,
+        userId: null,
+      };
+    default:
+      return state;
+  }
+};
 const tryLocalLogin = dispatch => async () => {
   try {
     const data = await AsyncStorage.getItem('userData');
@@ -26,14 +51,18 @@ const tryLocalLogin = dispatch => async () => {
 };
 
 const signUp = async data => {
-  const result = await api('/api/auth/signup', {
-    method: 'POST',
-    headers: {
-      contentType: 'application/json',
-    },
-    data: data,
-  });
-  return result;
+  try {
+    const result = await axiosInstance('/api/auth/signup', {
+      method: 'POST',
+      headers: {
+        contentType: 'application/json',
+      },
+      data: data,
+    });
+    return result;
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 const login =
@@ -75,10 +104,13 @@ const login =
   };
 
 const logout = dispatch => async () => {
-  await AsyncStorage.removeItem('shopUserData');
+  await AsyncStorage.removeItem('userData');
   clearLogoutTimer();
   dispatch({type: LOGOUT});
 };
+
+let logoutTimer;
+
 const setLogoutTimer = (expirationDate, dispatch) => {
   logoutTimer = setTimeout(() => {
     dispatch({type: LOGOUT});

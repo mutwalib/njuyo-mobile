@@ -9,8 +9,13 @@ import {
   Pressable,
 } from 'react-native';
 import COLORS from '../../consts/colors';
+import { useNavigation } from '@react-navigation/native';
 
-const OnBoardScreen = ({navigation}) => {
+const OnBoardScreen = () => {
+  const navigation = useNavigation();
+  const handleGetStarted = () => {
+    navigation.navigate('Main');
+  };
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: COLORS.white}}>
       <StatusBar translucent backgroundColor={COLORS.transparent} />
@@ -34,7 +39,7 @@ const OnBoardScreen = ({navigation}) => {
         </View>
       </View>
       <View style={{flex: 1, justifyContent: 'flex-end', paddingBottom: 40}}>
-        <Pressable onPress={() => navigation.navigate('HomeScreen')}>
+        <Pressable onPress={handleGetStarted}>
           <View style={style.btn}>
             <Text style={{color: COLORS.white}}> Get Started</Text>
           </View>

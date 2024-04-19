@@ -15,8 +15,9 @@ const PropertyStats = ({
     <View
       style={{
         backgroundColor: 'white',
-        padding: '1.5rem',
-        marginBottom: '1rem',
+        padding: 1.5,
+        paddingBottom:5,
+        marginBottom: 4,
       }}>
       <View
         style={{
@@ -28,18 +29,17 @@ const PropertyStats = ({
           style={{
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '0.3rem',
+            gap: 0.2,
           }}>
           <Text>BEDS</Text>
-          <View
-            style={{flexDirection: 'row', alignItems: 'center', gap: '0.5rem'}}>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 0.3}}>
             <Icon type="fa" name="bed" />
             <Text>{rooms}</Text>
           </View>
         </View>
         <View
           style={{
-            borderLeftWidth: 1,
+            borderLeftWidth: 0.5,
             borderLeftColor: 'gray',
             height: '100%',
           }}></View>
@@ -47,18 +47,17 @@ const PropertyStats = ({
           style={{
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '0.3rem',
+            gap: 0.2,
           }}>
           <Text>BATHS</Text>
-          <View
-            style={{flexDirection: 'row', alignItems: 'center', gap: '0.5rem'}}>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 0.5}}>
             <Icon type="fa" name="bath" />
             <Text>{baths}</Text>
           </View>
         </View>
         <View
           style={{
-            borderLeftWidth: 1,
+            borderLeftWidth: 0.5,
             borderLeftColor: 'gray',
             height: '100%',
           }}></View>
@@ -66,11 +65,10 @@ const PropertyStats = ({
           style={{
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '0.3rem',
+            gap: 0.3,
           }}>
           <Text>PARKING</Text>
-          <View
-            style={{flexDirection: 'row', alignItems: 'center', gap: '0.5rem'}}>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 0.5}}>
             {isParking ? (
               <Icon type="fa5" name="parking" />
             ) : (

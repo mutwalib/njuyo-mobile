@@ -1,12 +1,15 @@
 import React, {useEffect, useState} from 'react';
+import {Text, View} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {createStackNavigator} from '@react-navigation/stack';
 import OnBoardScreen from '../views/screens/OnBoardScreen';
 import LoadingScreen from '../views/screens/LoadingScreen';
 import DrawerRoutes from './DrawerRoutes';
+import ExitScreen from '../views/screens/ExitScreen';
+import LoginScreen from '../views/screens/auth/LoginScreen';
 const Stack = createStackNavigator();
 const StartStack = () => {
-  const [isFirstLaunch, setIsFirstLaunch] = useState(false);
+  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
   useEffect(() => {
     AsyncStorage.getItem('alreadyLaunched')
       .then(value => {
@@ -21,16 +24,23 @@ const StartStack = () => {
         console.error('Error fetching data from AsyncStorage:', error);
       });
   }, []);
+  // Render this until the isFirstLaunch state is determined
+  if (isFirstLaunch === null) {
+    return (
+      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+        <Text>Loading ...</Text>
+      </View>
+    );
+  }
   return (
-    <Stack.Navigator
-      screenOptions={{headerShown: false}}
-      initialRouteName={isFirstLaunch ? 'OnBoard' : 'Loading'}>
-      {isFirstLaunch ? (
+    <Stack.Navigator screenOptions={{headerShown: false}}>
+      {isFirstLaunch && (
         <Stack.Screen name="OnBoard" component={OnBoardScreen} />
-      ) : (
-        <Stack.Screen name="Loading" component={LoadingScreen} />
       )}
+      <Stack.Screen name="Loading" component={LoadingScreen} />
+      <Stack.Screen name="Exit" component={ExitScreen} />
       <Stack.Screen name="Main" component={DrawerRoutes} />
+      <Stack.Screen name="Authenticate" component={LoginScreen} />
     </Stack.Navigator>
   );
 };

@@ -1,65 +1,67 @@
 import React, {useState, useEffect} from 'react';
-import {View, Image} from 'react-native';
+import {View, Image, StyleSheet} from 'react-native';
 import Swiper from 'react-native-swiper';
-import axiosClient from '../../services/api/api';
+import axiosClient, {bURL} from '../../services/api/api';
+import axios from 'axios';
 
 const defaultImage = require('../../assets/house.jpg');
-
 const PropertyThumbnailSlider = ({pics}) => {
   const [photos, setPhotos] = useState([]);
-
   useEffect(() => {
     const fetchImages = async () => {
-      try {
-        const imagePromises = pics.map(async pic => {
-          try {
-            const response = await axiosClient.get(
-              `/property/images/${pic.picUrl}`,
-              {
-                responseType: 'blob',
-              },
-            );
-            if (response !== null) {
-              const uri = `data:image/png;base64,${response.data}`; // Assuming the response is in base64 format
-              return uri;
-            }
-          } catch (error) {
-            console.error(error);
+
+      if (pics.length > 0) {
+        try {
+          console.log(pics);
+          const imageUrls = await Promise.all(
+            pics.map(async pic => {
+              const response = await axios.get(
+                bURL + `/uploads/rentals/${pic.picUrl}`,
+                {
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Api-Key': '4RPJln2MkX0_2UAEmMhN7sAfQkFDCzfpK91hAu3LM5I',
+                  },
+                },
+              );
+              return response.data;
+            }),
+          );
+          if (imageUrls.length > 0) {
+            setPhotos({uri: imageUrls[0]});
+          } else {
+            setPhotos(defaultImage);
           }
-        });
-        const resolvedImages = await Promise.all(imagePromises);
-        setPhotos(resolvedImages);
-      } catch (error) {
-        console.error(error);
+        } catch (error) {
+          console.error('Error fetching images:', error);
+          setPhotos(defaultImage);
+        }
+      } else {
+        setPhotos(defaultImage);
       }
+      console.log(photos, 'photos');
     };
-
-    if (pics.length > 0) {
-      fetchImages();
-    } else {
-      setPhotos([defaultImage]);
-    }
+    fetchImages();
   }, [pics]);
-
   return (
-    <>
-      <Swiper
-        loop={true}
-        showsButtons={true} // Assuming you want to show navigation buttons
-        showsPagination={false} // Assuming you don't want pagination
-        autoplay={true} // Assuming you want autoplay
-      >
-        {photos.map((photo, index) => (
-          <View key={index}>
-            <Image
-              source={{uri: photo}}
-              style={{width: '100%', height: '100%'}}
-            />
-          </View>
-        ))}
-      </Swiper>
-    </>
+    <Swiper
+      loop={true}
+      showsButtons={true}
+      showsPagination={false}
+      autoplay={true}>
+      {photos.map((photo, index) => (
+        <View key={index}>
+          <Image source={{uri: photo}} style={styles.photo} />
+        </View>
+      ))}
+    </Swiper>
   );
 };
 
 export default PropertyThumbnailSlider;
+const styles = StyleSheet.create({
+  photo: {
+    width: '100%',
+    height: '100%',
+  },
+});

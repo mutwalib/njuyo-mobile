@@ -14,7 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 const OnBoardScreen = () => {
   const navigation = useNavigation();
   const handleGetStarted = () => {
-    navigation.navigate('Main');
+    navigation.navigate('Loading');
   };
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: COLORS.white}}>

@@ -2,7 +2,7 @@ import React from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import navigationStrings from '../consts/navigationStrings';
 import RentalListingScreen from '../../src/views/screens/rentals/RentalListingScreen';
-import RentalDetailsScreen from '../../src/views/screens/rentals/RentalDetailsScreen';
+import RentalDetailsScreen from '../components/rental/RentalDetailsScreen';
 const Stack = createStackNavigator();
 const RentalStack = () => {
   return (
@@ -11,7 +11,7 @@ const RentalStack = () => {
         name={navigationStrings.RENTAL}
         component={RentalListingScreen}
       />
-      <Stack.Screen name="rental_details" component={RentalDetailsScreen} />
+      <Stack.Screen name="rental_details" component={RentalDetailsScreen}/>
     </Stack.Navigator>
   );
 };

@@ -1,4 +1,10 @@
-import {View, StyleSheet, PermissionsAndroid, Platform} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  BackHandler,
+  PermissionsAndroid,
+  Platform,
+} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import React, {useEffect, useState} from 'react';
 import COLORS from '../../../consts/colors';
@@ -10,8 +16,7 @@ import SkeletonLoading from '../../../components/SkeletonLoading';
 
 const HomeScreen = () => {
   const [rentals, setRentals] = useState(null);
-  const [loading, setLoading] = useState(true); // Add loading state
-
+  const [loading, setLoading] = useState(true);
   const fetchNearbyRentals = async location => {
     const results = await getRentalsNearYou(location);
     console.log(results);
@@ -66,6 +71,19 @@ const HomeScreen = () => {
     return () => {
       // Clear any location watch or tasks here if needed
     };
+  }, []);
+  useEffect(() => {
+    const backAction = () => {
+      BackHandler.exitApp();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
   }, []);
   return (
     <View style={styles.container}>

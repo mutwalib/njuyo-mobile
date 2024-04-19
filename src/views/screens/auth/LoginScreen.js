@@ -17,6 +17,7 @@ import {checkBooked} from '../../../services/RentalService';
 import {setStoredJwt} from '../../../services/AuthServices';
 import {useDispatch} from 'react-redux';
 import {initAuth, login, logout} from '../../../store/authSlice';
+import {fetchUserAsync, setUser} from '../../../store/userSlice';
 export default function LoginScreen({navigation}) {
   const [email, setEmail] = useState({value: '', error: ''});
   const [password, setPassword] = useState({value: '', error: ''});
@@ -55,10 +56,17 @@ export default function LoginScreen({navigation}) {
         setIsLoading(false);
         return;
       }
-      // setStoredJwt(token);
       dispatch(login(token));
+      if (token) {
+        const response = await whoAmI();
+        dispatch(setUser(response));
+      }
       alert('Login Successful');
-      navigation.navigate('home');
+      setIsLoading(false);
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'Main'}],
+      });
     } catch (error) {
       alert('Login Failed');
       setIsLoading(false);

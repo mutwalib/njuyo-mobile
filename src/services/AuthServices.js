@@ -1,7 +1,8 @@
-import axiosClient, {baseURL} from './api/api';
+import axiosClient, {bURL} from './api/api';
 import axios from 'axios';
 // import {Jwt} from 'jsonwebtoken';
 import {getCookie, setCookie, clearCookie} from '../utils/cookies';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 export const loginUser = async formData => {
   console.log(formData);
   return await axiosClient
@@ -75,11 +76,11 @@ export const getApplyAgent = async userId => {
 };
 export const whoAmI = async () => {
   try {
-    const token = getCookie('token');
+    const token = await AsyncStorage.getItem('token');
     if (!token) {
       return null;
     }
-    const response = await axios.get(baseURL + `/api/users/me`, {
+    const response = await axios.get(bURL + `/api/users/me`, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: 'Bearer ' + token,
@@ -108,7 +109,7 @@ export const logOut = async () => {
     if (!token) {
       return null;
     }
-    const response = await axios.post(baseURL + `/api/auth/logout`, {
+    const response = await axios.post(bURL + `/api/auth/logout`, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: 'Bearer ' + token,

@@ -1,4 +1,4 @@
-import React, {useState, useContext} from 'react';
+import React, {useState} from 'react';
 import {View, StyleSheet, TouchableOpacity} from 'react-native';
 import {Text} from 'react-native-paper';
 
@@ -12,8 +12,6 @@ import {theme} from '../../../core/theme';
 import {emailValidator} from "../../helpers/emailValidator"
 import {passwordValidator} from '../../helpers/passwordValidator';
 import {nameValidator} from '../../helpers/nameValidator';
-import {Context as AuthContext} from '../../../context/auth/AuthContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import navigationStrings from '../../../consts/navigationStrings';
 
 export default function RegisterScreen({navigation}) {
@@ -21,7 +19,6 @@ export default function RegisterScreen({navigation}) {
   const [email, setEmail] = useState({value: '', error: ''});
   const [phone, setPhone] = useState({value: '', error: ''});
   const [password, setPassword] = useState({value: '', error: ''});
-  const {signUp} = useContext(AuthContext);
 
   const onSignUpPressed = () => {
     const nameError = nameValidator(name.value);
@@ -44,7 +41,7 @@ export default function RegisterScreen({navigation}) {
     }
     navigation.reset({
       index: 0,
-      routes: [{name: 'Dashboard'}],
+      routes: [{name: 'Home'}],
     });
   };
 

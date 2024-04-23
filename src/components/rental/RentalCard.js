@@ -14,6 +14,7 @@ import CustomButton from '../CustomButton';
 import Icon from '../../consts/Icon';
 import {useNavigation} from '@react-navigation/native';
 import axios from 'axios';
+import {rentalPictures} from '../../services/PictureService';
 
 const defaultImage = require('../../assets/house.jpg');
 
@@ -41,37 +42,12 @@ const RentalCard = ({rental}) => {
   const [isBooked, setIsBooked] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const navigation = useNavigation();
-
   useEffect(() => {
     const fetchImages = async () => {
       if (pics.length > 0) {
-        try {
-          console.log(pics  );
-          const imageUrls = await Promise.all(
-            pics.map(async pic => {
-              const response = await axios.get(
-                bURL + `/uploads/rentals/${pic.picUrl}`,
-                {
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Api-Key': '4RPJln2MkX0_2UAEmMhN7sAfQkFDCzfpK91hAu3LM5I',
-                  },
-                },
-              );
-              return response.data;
-            }),
-          );
-          if (imageUrls.length > 0) {
-            setDisplayImage({uri: imageUrls[0]});
-          } else {
-            setDisplayImage(defaultImage);
-          }
-        } catch (error) {
-          console.error('Error fetching images:', error);
-          setDisplayImage(defaultImage);
-        }
-      } else {
-        setDisplayImage(defaultImage);
+        const picUrls = pics.map(pic => pic.picUrl);
+        const response = await rentalPictures(picUrls);
+        setDisplayImage(pics.length > 0 ? {uri: response[0]} : defaultImage);
       }
     };
     fetchImages();

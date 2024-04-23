@@ -8,7 +8,12 @@ import BackHeader from '../../../Navigation/BackHeader';
 
 const ProfileScreen = ({navigation}) => {
   const user = useSelector(state => state.user.user);
-
+  const handleEditProfile = () => {
+    navigation.navigate('edit_profile');
+  };
+  const handleChangePassword = () => {
+    navigation.navigate('change_pwd');
+  };
   return (
     <SafeAreaView
       style={{
@@ -201,7 +206,8 @@ const ProfileScreen = ({navigation}) => {
               backgroundColor: COLORS.primary,
               borderRadius: 10,
               marginHorizontal: SIZES.padding * 2,
-            }}>
+            }}
+            onPress={handleEditProfile}>
             <Text
               style={{
                 ...FONTS.body4,
@@ -219,7 +225,8 @@ const ProfileScreen = ({navigation}) => {
               backgroundColor: COLORS.primary,
               borderRadius: 10,
               marginHorizontal: SIZES.padding * 2,
-            }}>
+            }}
+            onPress={handleChangePassword}>
             <Text
               style={{
                 ...FONTS.body4,

@@ -63,7 +63,7 @@ const HomeScreen = () => {
           console.log(error.message);
           setLoading(false);
         },
-        {enableHighAccuracy: false, timeout: 40000, maximumAge: 10000},
+        {enableHighAccuracy: false, timeout: 40000000, maximumAge: 1000000},
       );
     };
     requestLocationPermission();

@@ -1,16 +1,16 @@
 import React, {useState, useEffect} from 'react';
 import {View, Text, StyleSheet, Button} from 'react-native';
 import {useRentalFormats} from '../../helpers/hooks/useRentalFormats';
-import PropertyThumbnailSlider from '../features/PropertyThumbnailSlider';
-import PropertyCost from '../features/PropertyCost';
-import PropertyContact from '../features/PropertyContact';
-import PropertyStats from '../features/PropertyStats';
-import TextContentBox from '../features/TextContentBox';
+import PropertyThumbnailSlider from '../../components/features/PropertyThumbnailSlider';
+import PropertyCost from '../../components/features/PropertyCost';
+import PropertyContact from '../../components/features/PropertyContact';
+import PropertyStats from '../../components/features/PropertyStats';
+import TextContentBox from '../../components/features/TextContentBox';
 import {whoAmI} from '../../services/AuthServices';
 import {checkBooked} from '../../services/RentalService';
 import Icon from '../../consts/Icon';
 import COLORS from '../../consts/colors';
-import BackButton from '../BackButton';
+import BackButton from '../../components/BackButton';
 const RentalDetailsScreen = ({navigation, route}) => {
   const rental = route.params;
   const [userId, setUserId] = useState();
@@ -57,7 +57,7 @@ const RentalDetailsScreen = ({navigation, route}) => {
     };
     fetchUserData();
   }, [id, rental]);
-  
+
   const previousPage = () => {
     navigation.goBack();
   };

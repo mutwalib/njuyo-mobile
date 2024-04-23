@@ -19,6 +19,7 @@ const AuthStack = () => {
         name={navigationStrings.RESETPASS}
         component={ResetPasswordScreen}
       />
+     
     </Stack.Navigator>
   );
 };

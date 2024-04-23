@@ -31,10 +31,8 @@ const LoadingScreen = () => {
       if (token) {
         const response = await whoAmI();
         dispatch(setUser(response));
-        navigation.navigate('Main');
-      } else {
-        navigation.navigate('Authenticate');
-      }
+      } 
+      navigation.navigate('Main');
     };
 
     const timeout = setTimeout(() => {

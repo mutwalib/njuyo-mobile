@@ -2,14 +2,10 @@ import React from 'react';
 import {StyleSheet} from 'react-native';
 import {View, Image, Text} from 'react-native';
 
-const ComponentHeader = props => {
+const ComponentHeader = ({props, children}) => {
   return (
     <View style={style.header}>
-      <Image
-        source={require('../assets/profile.png')}
-        style={style.profileImg}
-        resizeMode="contain"
-      />
+      <Text>{children}</Text>
     </View>
   );
 };

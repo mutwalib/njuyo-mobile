@@ -9,7 +9,6 @@ import {
   Dimensions,
 } from 'react-native';
 import {FlatList, ScrollView} from 'react-native-gesture-handler';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import COLORS from '../../../consts/colors';
 const HostelDetails = () => {
   return (

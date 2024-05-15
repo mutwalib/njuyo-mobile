@@ -4,12 +4,13 @@ import COLORS from '../consts/colors';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import icons from '../consts/icons';
 const BackHeader = ({title, navigation}) => {
+  const handleClose = () => {
+    navigation.goBack();
+  };
   return (
     <View style={styles.container}>
       <View style={{flexDirection: 'row', alignItems: 'center', flex: 1}}>
-        <TouchableOpacity
-          onPress={navigation.goBack}
-          style={styles.iconContainer}>
+        <TouchableOpacity onPress={handleClose} style={styles.iconContainer}>
           <Image
             resizeMode="contain"
             style={styles.icon}

@@ -22,6 +22,7 @@ import MyProspects from '../views/screens/MyProspects/MyProspects';
 import Icons from '../consts/icons';
 import {logout} from '../store/authSlice';
 import {setUser} from '../store/userSlice';
+import PropertiesStack from './PropertiesStack';
 
 const Drawer = createDrawerNavigator();
 
@@ -161,20 +162,10 @@ const DrawerRoutes = () => {
                     <Icon type="fa" name="building" size={size} color={color} />
                   ),
                 }}
-                component={MyProperties}
+                component={PropertiesStack}
               />
             </>
           )}
-          {/* <Drawer.Screen
-            name="Log out"
-            options={{
-              headerShown: false,
-              drawerIcon: ({focused, color, size}) => (
-                <Icon type="fa" name="sign-out" size={size} color={color} />
-              ),
-            }}
-            onPress={handleLogout}
-          /> */}
         </>
       ) : (
         <>

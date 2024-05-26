@@ -23,6 +23,7 @@ import {useNavigation} from '@react-navigation/native';
 import SelectDropdown from 'react-native-select-dropdown';
 import axiosClient from '../../services/api/api';
 import {useSelector} from 'react-redux';
+import NetInfo from '@react-native-community/netinfo';
 export default function AddRentalScreen() {
   const navigation = useNavigation();
   const owner = useSelector(state => state.user.user);
@@ -35,6 +36,12 @@ export default function AddRentalScreen() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedFrequency, setSelectedFrequency] = useState('');
   const [nearVillage, setNearVillage] = useState('');
+  const [isStep1Valid, setIsStep1Valid] = useState(false);
+  const [isStep2Valid, setIsStep2Valid] = useState(false);
+  const [isStep3Valid, setIsStep3Valid] = useState(false);
+  const [isStep4Valid, setIsStep4Valid] = useState(false);
+  const [isStep5Valid, setIsStep5Valid] = useState(false);
+
   const [formData, setFormData] = useState({
     titles: '',
     currency: 'UGX',
@@ -77,7 +84,39 @@ export default function AddRentalScreen() {
     }
     rentalFrequencies();
   }, []);
+  useEffect(() => {
+    validateStep1();
+    validateStep2();
+    validateStep3();
+    validateStep4();
+    validateStep5();
+  }, [formData]);
+  const validateStep1 = () => {
+    const {titles, currency, price, nmonths, utilities, frequency} = formData;
+    setIsStep1Valid(
+      titles && currency && price && nmonths && utilities && frequency,
+    );
+  };
 
+  const validateStep2 = () => {
+    const {address, province, postal_code} = formData;
+    setIsStep2Valid(
+      address && province && (isCurrentLocation || selectedVillage),
+    );
+  };
+
+  const validateStep3 = () => {
+    const {bedrooms, livingrooms, toilet, surface_area, images} = formData;
+    setIsStep3Valid(bedrooms && livingrooms && toilet && surface_area);
+  };
+  const validateStep4 = () => {
+    const {property_details, additional_info} = formData;
+    setIsStep4Valid(property_details && additional_info);
+  };
+  const validateStep5 = () => {
+    const {images} = formData;
+    setIsStep5Valid(images.length > 2);
+  };
   const handleNextStep = () => {
     setStep(step + 1);
   };
@@ -143,17 +182,15 @@ export default function AddRentalScreen() {
   };
   const handleSubmitForm = useCallback(async () => {
     try {
-      if (formData.isCurrentlocation) {
-        // setFormData({...formData, latitude: location?.latitude});
-        // setFormData({...formData, longitude: location?.longitude});
-        // setIsLoading(true);
-      } 
-      // else if (lat === null || longi == null) {
-      //   Alert.alert(
-      //     'We have not picked your location. Please enable location and try again!',
-      //   );
-      //   return;
-      // }
+      const netInfoState = await NetInfo.fetch();
+      // console.log('Net Info State', netInfoState);
+      if (!netInfoState.isConnected) {
+        Alert.alert(
+          'No internet connection',
+          'Please check your internet connection and try again.',
+        );
+        return;
+      }
       if (owner === null) {
         Alert.alert('You are not authenticated to perform this action!');
         return;
@@ -181,17 +218,28 @@ export default function AddRentalScreen() {
         conditionsOfStay: formData.conditions,
         latitude: formData.isCurrentlocation ? formData?.latitude : 0.0,
         longitude: formData.isCurrentlocation ? formData?.longitude : 0.0,
-        villageId: formData.village,
         addressName: formData.address,
         postalCode: formData.postal_code,
         province: formData.province,
       };
+      // const fileObjects = formData.images.map(image => image.file);
+      // const propertyData = {
+      //   property: JSON.stringify(rentalData),
+      //   files: fileObjects,
+      // };
       const fileObjects = formData.images.map(image => image.file);
       const propertyData = {
         property: JSON.stringify(rentalData),
         files: fileObjects,
       };
-      const resp = await createRental(propertyData);
+
+      const formDataToSend = new FormData();
+      formDataToSend.append('property', propertyData.property);
+      for (let i = 0; i < propertyData.files.length; i++) {
+        formDataToSend.append('files', propertyData.files[i]);
+      }
+
+      const resp = await createRental(formDataToSend);
 
       if (resp?.status === 202) {
         Alert.alert('Form submited!');
@@ -201,7 +249,7 @@ export default function AddRentalScreen() {
       }
     } catch (error) {
       console.log('error', error);
-      Alert.alert('An error occurred. Please try again.');
+      Alert.alert('An error occurred. Please try again.' + error);
     }
   }, [formData, navigation]);
 
@@ -310,6 +358,7 @@ export default function AddRentalScreen() {
   // Android Permissions
   const requestCameraPermission = async () => {
     try {
+      // return error;
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.CAMERA,
         {
@@ -751,6 +800,13 @@ export default function AddRentalScreen() {
         <Button
           title={step === 6 ? 'Submit' : 'Next'}
           onPress={step === 6 ? handleSubmitForm : handleNextStep}
+          disabled={
+            (step === 1 && !isStep1Valid) ||
+            (step === 2 && !isStep2Valid) ||
+            (step === 3 && !isStep3Valid) ||
+            (step === 4 && !isStep4Valid) ||
+            (step === 5 && !isStep5Valid)
+          }
           buttonStyle={
             step === 6
               ? styles.submitButton

@@ -2,7 +2,7 @@ import axiosClient from './api/api';
 const getAllRentals = async () => {
   try {
     const response = axiosClient.get(`/property/rentals`);
-    console.log(response, "all rentals");
+    console.log(response, 'all rentals');
     return response;
   } catch (error) {
     console.error('Error fetching rentals:', error);
@@ -43,6 +43,7 @@ export const getRentalByExternalId = async externalId => {
 export const getRentalById = async id => {
   try {
     const response = await axiosClient.get(`/property/single-rental/${id}`);
+    console.log('-----------', response);
     return response;
   } catch (error) {
     throw error;
@@ -60,14 +61,7 @@ const upload = (file, onUploadProgress) => {
   });
 };
 
-export const createRental = async propertyData => {
-  console.log(propertyData);
-  const formData = new FormData();
-  const files = propertyData.files;
-  formData.append('property', propertyData.property);
-  for (let i = 0; i < files.length; i++) {
-    formData.append('files', files[i]);
-  }
+export const createRental = async formData => {
   return axiosClient
     .post('/property/create/rental', formData, {
       headers: {
@@ -79,7 +73,8 @@ export const createRental = async propertyData => {
       return response;
     })
     .catch(error => {
-      return error;
+      console.log('Thrown error', error);
+      throw error;
     });
 };
 export const updateRental = async updateData => {

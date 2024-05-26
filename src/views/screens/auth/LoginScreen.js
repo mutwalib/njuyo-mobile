@@ -60,9 +60,9 @@ export default function LoginScreen({navigation}) {
       if (token) {
         const response = await whoAmI();
         dispatch(setUser(response));
+        setIsLoading(false);
       }
       alert('Login Successful');
-      setIsLoading(false);
       navigation.reset({
         index: 0,
         routes: [{name: 'Main'}],

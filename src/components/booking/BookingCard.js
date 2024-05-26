@@ -2,8 +2,16 @@ import React from 'react';
 import {Text, View, TouchableOpacity, StyleSheet} from 'react-native';
 import Icon from '../../consts/Icon';
 import {formatDate, formatTime} from '../../helpers/Helpers';
+import {useNavigation} from '@react-navigation/native';
+import {
+  getRentalByExternalId,
+} from '../../services/RentalService';
 const BookingCard = ({booking}) => {
-  const handleRentalClick = rentalExternalId => {};
+  const navigation = useNavigation();
+  const handleRentalClick = async () => {
+    const response = await getRentalByExternalId(booking.rentalExternalId);
+    navigation.navigate('rental_details', response.data);
+  };
   const handleOnApproveInspection = async () => {};
   const renderCancelBookingButton = booking => {
     const scheduleDateTimeString = `${formatDate(
@@ -56,8 +64,7 @@ const BookingCard = ({booking}) => {
   };
   return (
     <View style={styles.card}>
-      <TouchableOpacity
-        onPress={() => handleRentalClick(booking.rentalExternalId)}>
+      <TouchableOpacity onPress={() => handleRentalClick()}>
         <Text style={styles.title}>{booking.rentalTitle}</Text>
         <Text style={styles.address}>
           <Icon type="fa" name="map-marker" />{' '}

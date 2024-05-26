@@ -18,11 +18,16 @@ const BackHeader = ({title, navigation}) => {
           />
         </TouchableOpacity>
       </View>
-      <View style={{flexDirection: 'row', alignItems: 'center', flex: 2}}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignContent: 'center',
+          alignItems: 'center',
+          flex: 3,
+        }}>
         <Text
           style={{
-            marginLeft: 12,
-            fontSize: 17,
+            fontSize: 15,
             fontWeight: 'bold',
             color: COLORS.light,
           }}>

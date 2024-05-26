@@ -7,6 +7,7 @@ import LoadingScreen from '../views/screens/LoadingScreen';
 import DrawerRoutes from './DrawerRoutes';
 import ExitScreen from '../views/screens/ExitScreen';
 import LoginScreen from '../views/screens/auth/LoginScreen';
+import Background from '../components/Background';
 const Stack = createStackNavigator();
 const StartStack = () => {
   const [isFirstLaunch, setIsFirstLaunch] = useState(null);
@@ -28,7 +29,9 @@ const StartStack = () => {
   if (isFirstLaunch === null) {
     return (
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-        <Text>Loading ...</Text>
+        <Background>
+          <Text>Loading ...</Text>
+        </Background>
       </View>
     );
   }

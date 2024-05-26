@@ -2,61 +2,116 @@ import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
+  Alert,
   TouchableOpacity,
   Image,
   StyleSheet,
   ScrollView,
 } from 'react-native';
+import {useSelector} from 'react-redux';
 import Stamp from '../Stamp';
 import {useRentalFormats} from '../../helpers/hooks/useRentalFormats';
-import axiosClient, {bURL} from '../../services/api/api';
 import CustomButton from '../CustomButton';
 import Icon from '../../consts/Icon';
 import {useNavigation} from '@react-navigation/native';
 import axios from 'axios';
-import {rentalPictures} from '../../services/PictureService';
+import {
+  fetchAndCacheImage,
+  fetchImageUrl,
+  rentalPicUrls,
+  rentalPictures,
+} from '../../services/PictureService';
+import {bookRental, checkBooked} from '../../services/RentalService';
 
-const defaultImage = require('../../assets/house.jpg');
+const defaultImage = require('../../assets/default_house-img.png');
 
 const RentalCard = ({rental}) => {
   const {
-    id,
     noOfRooms,
     isParkingAvailable,
     noOfToilets,
     pics,
     title,
-    propertyDetails,
     pricePerMonth,
-    agentId,
     rentFrequency,
     addressName,
-    currency,
-    externalId,
     distance,
     distanceToNow,
     takenStatus,
   } = useRentalFormats({rental});
+  const user = useSelector(state => state.user.user);
 
   const [displayImage, setDisplayImage] = useState(defaultImage);
   const [isBooked, setIsBooked] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isBookButtonDisabled, setIsBookButtonDisabled] = useState(false);
   const navigation = useNavigation();
+
   useEffect(() => {
     const fetchImages = async () => {
       if (pics.length > 0) {
-        const picUrls = pics.map(pic => pic.picUrl);
-        const response = await rentalPictures(picUrls);
-        setDisplayImage(pics.length > 0 ? {uri: response[0]} : defaultImage);
+        const resp = await fetchAndCacheImage(pics[0].picUrl);
+        setDisplayImage({uri: resp});
       }
     };
     fetchImages();
+    checkBookingStatus();
   }, [pics]);
-
+  const checkBookingStatus = async () => {
+    try {
+      if (user) {
+        const data = {uId: user?.id, rId: rental.id};
+        const resp = await checkBooked(data);
+        if (resp?.data) {
+          setIsBooked(true);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
   const handleViewRental = () => {
     navigation.navigate('rental_details', rental);
   };
-
+  const handleEditRental = () => {};
+  const handleOnBookRental = async () => {
+    setIsBookButtonDisabled(true);
+    try {
+      if (!user) {
+        Alert.alert(
+          'You are not logged in.',
+          'Please sign in to book this property!',
+          [
+            {text: 'Cancel', style: 'cancel'},
+            {
+              text: 'Log In',
+              onPress: () => navigation.navigate('Login'),
+            },
+          ],
+          {cancelable: false},
+        );
+        return;
+      }
+      const response = await bookRental({
+        rentalId: rental.id,
+        userId: user?.id,
+      });
+      if (response?.status === 200) {
+        setIsBooked(true);
+        Alert.alert('Booking Successful', response.data, [{text: 'OK'}], {
+          cancelable: false,
+        });
+      } else {
+        Alert.alert('Booking Failed', response.data, [{text: 'OK'}], {
+          cancelable: false,
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsBookButtonDisabled(false);
+    }
+  };
   return (
     <ScrollView contentContainerStyle={styles.card}>
       <TouchableOpacity onPress={handleViewRental}>
@@ -104,9 +159,26 @@ const RentalCard = ({rental}) => {
       </View>
       <View style={styles.buttonContainer}>
         <CustomButton
-          label={'Book Now'}
-          onPress={handleViewRental}
-          disabled={takenStatus}
+          label={
+            user && user.id === rental.agentId
+              ? 'Edit'
+              : isBooked
+              ? 'You Booked This'
+              : 'Book Now'
+          }
+          onPress={
+            user && user.id === rental.agentId
+              ? handleEditRental
+              : isBooked
+              ? handleViewRental
+              : handleOnBookRental
+          }
+          disabled={
+            user && user.id === rental.agentId
+              ? false
+              : takenStatus || isBookButtonDisabled
+          }
+          isMyOwn={user && user.id === rental.agentId}
           isBooked={isBooked}
           isHovered={isHovered}
         />

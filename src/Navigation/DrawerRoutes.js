@@ -10,7 +10,7 @@ import TabRoutes from './TabRoutes';
 import ProfileScreen from '../views/screens/profile/ProfileScreen';
 import {View, Text, Image} from 'react-native';
 import Icon from '../consts/Icon';
-import User from '../assets/user.jpg';
+import User from '../assets/profile.png';
 import navigationStrings from '../consts/navigationStrings';
 import LoginScreen from '../views/screens/auth/LoginScreen';
 import RegisterScreen from '../views/screens/auth/RegisterScreen';

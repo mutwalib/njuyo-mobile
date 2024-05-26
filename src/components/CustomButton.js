@@ -1,19 +1,33 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import {TouchableOpacity, Text, StyleSheet} from 'react-native';
 
-const CustomButton = ({ label, disabled, onPress, isBooked, isHovered }) => {
+const CustomButton = ({
+  label,
+  disabled,
+  onPress,
+  isMyOwn,
+  isBooked,
+  isHovered,
+}) => {
   return (
     <TouchableOpacity
       style={[
         styles.button,
+        isMyOwn && styles.ownerButton,
         isBooked && styles.bookedButton,
         isHovered && styles.hoveredButton,
         disabled && styles.disabledButton,
       ]}
       onPress={onPress}
-      disabled={disabled}
-    >
-      <Text style={styles.buttonText}>{label}</Text>
+      disabled={disabled}>
+      <Text
+        style={[
+          styles.buttonText,
+          isBooked && styles.bookedButtonText,
+          isMyOwn && styles.ownerButtonText,
+        ]}>
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 };
@@ -31,8 +45,17 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 10,
   },
+  ownerButton: {
+    borderColor: '#4CAF50',
+    backgroundColor: '#E8F5E9',
+  },
+  ownerButtonText: {
+    color: '#4CAF50',
+  },
   bookedButton: {
     borderColor: '#161d34',
+  },
+  bookedButtonText: {
     color: '#161d34',
   },
   hoveredButton: {
@@ -45,7 +68,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: 'inherit',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 15,
     color: '#d50000',
   },
 });

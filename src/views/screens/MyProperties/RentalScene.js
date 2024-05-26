@@ -1,13 +1,18 @@
 import React, {useEffect, useState} from 'react';
 import {Text, TouchableOpacity, View, FlatList, StyleSheet} from 'react-native';
 import {useSelector} from 'react-redux';
-import {getMyRentals} from '../../../services/RentalService';
+import {getMyRentals, getRentalById} from '../../../services/RentalService';
 import {useNavigation} from '@react-navigation/native';
+import MyRentalCard from './MyRentalCard';
 
 const RentalScene = () => {
   const user = useSelector(state => state.user.user);
   const navigation = useNavigation();
   const [rentals, setRentals] = useState([]);
+  const handleRentalClick = async rentalId => {
+    const response = await getRentalById(rentalId);
+    navigation.navigate('rental_details', response.data);
+  };
   useEffect(() => {
     const fetchRentals = async () => {
       try {
@@ -20,63 +25,44 @@ const RentalScene = () => {
       }
     };
     fetchRentals();
-  }, [user]); // Fetch rentals when user changes
-  const renderRentalCard = ({item}) => (
-    <View style={styles.card}>
-      <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.address}>{item.addressName}</Text>
-      <Text style={styles.price}>
-        {item.pricePerMonth.toLocaleString('en-US', {
-          style: 'currency',
-          currency: item.currency,
-        })}{' '}
-        - {item.rentFrequency}
-      </Text>
-      <Text style={styles.details}>
-        Rooms: {item.noOfRooms} | Toilets: {item.noOfToilets}
-      </Text>
-      <Text style={styles.utilities}>Utilities: {item.utilitiesToPay}</Text>
-      <Text style={styles.date}>
-        Registered on: {new Date(item.registeredOn).toLocaleDateString()}
-      </Text>
-    </View>
-  );
+  }, [user]);
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => navigation.navigate('add_rental')}>
-        <Text style={styles.addRentalButton}>Add New Rental</Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('add_rental')}>
+        <Text style={styles.buttonText}>Add New Rental</Text>
       </TouchableOpacity>
-      {/* Render rentals in a table */}
-      <FlatList
-        data={rentals}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={renderRentalCard}
-        contentContainerStyle={styles.flatList}
-      />
+      {rentals && (
+        <FlatList
+          data={rentals}
+          renderItem={({item}) => (
+            <MyRentalCard
+              item={item}
+              navigation={navigation}
+              handleRentalClick={handleRentalClick}
+            />
+          )}
+          contentContainerStyle={styles.flatList}
+        />
+      )}
     </View>
   );
 };
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 15,
     paddingTop: 16,
-    marginHorizontal: 10,
+    marginHorizontal: 5,
   },
-  addRentalButton: {
-    fontSize: 16,
-    color: 'blue',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  flatList: {
-    paddingBottom: 16,
-  },
-  card: {
-    backgroundColor: '#fff',
+  button: {
+    backgroundColor: '#4CAF50',
     borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 2,
@@ -84,29 +70,16 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 3,
+    elevation: 5,
+    marginVertical: 10,
   },
-  title: {
-    fontSize: 18,
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 8,
   },
-  address: {
-    marginBottom: 8,
-  },
-  price: {
-    color: 'green',
-    marginBottom: 8,
-  },
-  details: {
-    marginBottom: 4,
-  },
-  utilities: {
-    marginBottom: 4,
-  },
-  date: {
-    color: '#777',
-    fontSize: 12,
+  flatList: {
+    paddingBottom: 16,
   },
 });
 export default RentalScene;

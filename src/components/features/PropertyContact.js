@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, Button, Alert} from 'react-native';
-import {useSelector, useDispatch} from 'react-redux';
+import {View, Text, Alert, StyleSheet, TouchableOpacity} from 'react-native';
+import {useSelector} from 'react-redux';
 import {
   bookRental,
   deleteRental,
@@ -9,18 +9,15 @@ import {
   getBooking,
 } from '../../services/RentalService';
 import {useNavigation} from '@react-navigation/native';
-import {whoAmI} from '../../services/AuthServices';
-
+import Toast from 'react-native-toast-message';
 const PropertyContact = ({owner, agentId, rentalId}) => {
   const [isBookButtonDisabled, setIsBookButtonDisabled] = useState(false);
   const [isDeleteButtonDisabled, setIsDeleteButtonDisabled] = useState(false);
   const [isEditButtonDisabled, setIsEditButtonDisabled] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
-  const [showDialog, setShowDialog] = useState(false);
-  const [isNotCancellable, setIsNotCancellable] = useState(false);
-  const [user, setUser] = useState(null);
-
+  const [isUnCancellable, setIsUnCancellable] = useState(false);
   const navigation = useNavigation();
+  const user = useSelector(state => state.user.user);
 
   useEffect(() => {
     checkBookingStatus();
@@ -28,15 +25,15 @@ const PropertyContact = ({owner, agentId, rentalId}) => {
 
   const checkBookingStatus = async () => {
     try {
-      if (user !== null && user !== undefined) {
-        const data = {uId: user?.id, rId: rentalId};
+      if (user) {
+        const data = {uId: user.id, rId: rentalId};
         const resp = await checkBooked(data);
-        if (resp?.data === true) {
+        if (resp?.data) {
           setIsBooked(true);
           const result = await getBooking(data);
           const book = result.data;
           if (book.isRented || book.isInspected || book.isScheduled) {
-            setIsNotCancellable(true);
+            setIsUnCancellable(true);
           }
         }
       }
@@ -44,75 +41,73 @@ const PropertyContact = ({owner, agentId, rentalId}) => {
       console.error(error);
     }
   };
-  const fetchUser = async () => {
-    const resp = await whoAmI();
-    if (resp !== null) {
-      setUser(resp);
+
+  const handleOnCancel = () => {
+    Alert.alert(
+      'Cancel Booking',
+      'You are about to cancel booking for this property.',
+      [
+        {text: 'Wait', style: 'cancel'},
+        {
+          text: 'Proceed',
+          onPress: handleCancelConfirm,
+        },
+      ],
+      {cancelable: false},
+    );
+  };
+
+  const handleCancelConfirm = async () => {
+    try {
+      if (user) {
+        const data = {rentalId: rentalId, customerId: user.id};
+        const response = await cancelBooking(data);
+        if (response?.status === 202) {
+          setIsBooked(false);
+          Alert.alert(
+            'Cancelled',
+            'Booking for this property ' + response.data,
+            [{text: 'OK'}],
+            {
+              cancelable: false,
+            },
+          );
+          setIsBookButtonDisabled(false);
+        }
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
-  const handleOnCancel = () => {
-    setShowDialog(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowDialog(false);
-  };
-
-  // const handleCancelConfirm = async () => {
-  //   try {
-  //     if (userId !== null && userId !== undefined) {
-  //       const data = {rentalId: rentalId, customerId: userId};
-  //       const response = await cancelBooking(data);
-  //       if (response?.status === 202) {
-  //         setIsBooked(false);
-  //         Alert.alert(
-  //           'Cancelled',
-  //           'Booking for this property ' + response.data,
-  //           [{text: 'OK', onPress: () => console.log('OK Pressed')}],
-  //           {cancelable: false},
-  //         );
-  //         setIsBookButtonDisabled(!isBookButtonDisabled);
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };
 
   const handleOnBooking = async () => {
     setIsBookButtonDisabled(true);
     try {
-      if (user?.id === null) {
-        // Alert.alert(
-        //   'You are not logged in.',
-        //   'Please sign in to book this property!',
-        //   [
-        //     {text: 'Cancel', onPress: () => console.log('Cancel Pressed')},
-        //     {
-        //       text: 'Log In',
-        //       onPress: () => navigation.navigate('Login'), // Assuming your login screen is named 'Login'
-        //     },
-        //   ],
-        //   {cancelable: false},
-        // );
+      if (!user) {
+        Alert.alert(
+          'You are not logged in.',
+          'Please sign in to book this property!',
+          [
+            {text: 'Cancel', style: 'cancel'},
+            {
+              text: 'Log In',
+              onPress: () => navigation.navigate('Login'),
+            },
+          ],
+          {cancelable: false},
+        );
         return;
       }
-      const response = await bookRental({rentalId, userId});
+      const response = await bookRental({rentalId, userId: user.id});
       if (response?.status === 200) {
         setIsBooked(true);
-        // Alert.alert(
-        //   'Booking Successful',
-        //   response.data,
-        //   [{text: 'OK', onPress: () => console.log('OK Pressed')}],
-        //   {cancelable: false},
-        // );
+        Alert.alert('Booking Successful', response.data, [{text: 'OK'}], {
+          cancelable: false,
+        });
       } else {
-        // Alert.alert(
-        //   'Booking Failed',
-        //   response.data,
-        //   [{text: 'OK', onPress: () => console.log('OK Pressed')}],
-        //   {cancelable: false},
-        // );
+        Alert.alert('Booking Failed', response.data, [{text: 'OK'}], {
+          cancelable: false,
+        });
       }
     } catch (error) {
       console.error(error);
@@ -136,88 +131,113 @@ const PropertyContact = ({owner, agentId, rentalId}) => {
 
   const handleOnDelete = async () => {
     setIsDeleteButtonDisabled(true);
-    const data = {id: 'rentalId', userId: 'userId'};
+    const data = {id: rentalId, userId: user.id};
     try {
       const response = await deleteRental(data);
-      // Alert.alert(
-      //   'Booking Successful',
-      //   response.data,
-      //   [{text: 'OK', onPress: () => console.log('OK Pressed')}],
-      //   {cancelable: false},
-      // );
       navigation.goBack();
     } catch (error) {
-      // Alert.alert(
-      //   'Booking Failed',
-      //   error,
-      //   [{text: 'OK', onPress: () => console.log('OK Pressed')}],
-      //   {cancelable: false},
-      // );
+      console.error(error);
     } finally {
       setIsDeleteButtonDisabled(false);
     }
   };
 
   return (
-    <View
-      style={{
-        backgroundColor: 'white',
-        padding: 1.5,
-        paddingBottom: 5,
-        marginBottom: 4,
-      }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-        }}>
-        <View
-          style={{
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 0.3,
-          }}>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 0.5}}>
-            <Text>Owned By: {owner}</Text>
-          </View>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 0.5}}>
+    <View style={styles.container}>
+      <View style={styles.innerContainer}>
+        <View style={styles.textContainer}>
+          {user?.id !== agentId && (
+            <View style={styles.ownerContainer}>
+              <Text>Owned By: {owner}</Text>
+            </View>
+          )}
+
+          <View style={styles.buttonContainer}>
             {user?.id === agentId ? (
-              <View style={{flexDirection: 'row', gap: '0.5rem'}}>
-                <Button
-                  title="Edit Rental"
+              <View style={styles.agentButtons}>
+                <TouchableOpacity
+                  style={[styles.button, styles.editButton]}
                   disabled={isEditButtonDisabled}
-                  onPress={handleOnEdit}
-                />
-                <Button
-                  title="Delete Rental"
+                  onPress={handleOnEdit}>
+                  <Text style={styles.buttonText}>Edit Rental</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.deleteButton]}
                   disabled={isDeleteButtonDisabled}
-                  onPress={handleOnDelete}
-                />
+                  onPress={handleOnDelete}>
+                  <Text style={styles.buttonText}>Delete Rental</Text>
+                </TouchableOpacity>
               </View>
-            ) : isNotCancellable ? null : isBooked ? (
-              <Button title="Cancel Booking" onPress={handleOnCancel} />
+            ) : isUnCancellable ? null : isBooked ? (
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={handleOnCancel}>
+                <Text style={styles.buttonText}>Cancel Booking</Text>
+              </TouchableOpacity>
             ) : (
-              <Button
-                title="Book Now"
+              <TouchableOpacity
+                style={[styles.button, styles.bookButton]}
                 disabled={isBookButtonDisabled}
-                onPress={handleOnBooking}
-              />
+                onPress={handleOnBooking}>
+                <Text style={styles.buttonText}>Book Now</Text>
+              </TouchableOpacity>
             )}
           </View>
         </View>
       </View>
-      {/* <Dialog
-        title={`Cancel Booking`}
-        onClose={handleCloseModal}
-        onProceed={() => handleCancelConfirm()}
-        showDialog={showDialog}
-        declineLabel="Decline"
-        proceedLabel="Proceed">
-        <Text>Are you sure you want to cancel Booking for this property?</Text>
-      </Dialog> */}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: 'white',
+    padding: 15,
+    paddingBottom: 20,
+    marginBottom: 20,
+  },
+  innerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  textContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  ownerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  agentButtons: {
+    flexDirection: 'row',
+  },
+  button: {
+    padding: 10,
+    borderRadius: 5,
+    margin: 5,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  editButton: {
+    backgroundColor: '#4CAF50',
+  },
+  deleteButton: {
+    backgroundColor: '#F44336',
+  },
+  bookButton: {
+    backgroundColor: '#2196F3',
+  },
+  cancelButton: {
+    backgroundColor: 'red',
+  },
+});
 
 export default PropertyContact;

@@ -1,19 +1,18 @@
-import React, {useState, useEffect} from 'react';
-import {View, Text, StyleSheet, Button} from 'react-native';
+import React, {useCallback} from 'react';
+import {View, Text, StyleSheet, ScrollView, BackHandler} from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
 import {useRentalFormats} from '../../helpers/hooks/useRentalFormats';
-import PropertyThumbnailSlider from '../../components/features/PropertyThumbnailSlider';
 import PropertyCost from '../../components/features/PropertyCost';
 import PropertyContact from '../../components/features/PropertyContact';
 import PropertyStats from '../../components/features/PropertyStats';
 import TextContentBox from '../../components/features/TextContentBox';
-import {whoAmI} from '../../services/AuthServices';
-import {checkBooked} from '../../services/RentalService';
 import Icon from '../../consts/Icon';
 import COLORS from '../../consts/colors';
-import BackButton from '../../components/BackButton';
+import BackHeader from '../../Navigation/BackHeader';
+import CarouselComponent from '../../components/features/CarouselComponent';
+
 const RentalDetailsScreen = ({navigation, route}) => {
   const rental = route.params;
-  const [userId, setUserId] = useState();
   const {
     id,
     noOfRooms,
@@ -24,58 +23,40 @@ const RentalDetailsScreen = ({navigation, route}) => {
     propertyDetails,
     pricePerMonth,
     agentId,
+    owner,
     rentFrequency,
     addressName,
     currency,
-    owner,
     addedOn,
     externalId,
     distanceToNow,
   } = useRentalFormats({rental});
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.goBack();
+        return true;
+      };
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const result = await whoAmI();
-        console.log(result);
-        if (result !== null) {
-          const copyData = {...result};
-          setUserId(copyData.id);
-          if (copyData && copyData.id) {
-            let uId = copyData.id;
-            let rId = id;
-            const data = {uId, rId};
-            const resp = await checkBooked(data);
-            if (resp.data === true) {
-              // Handle booking status
-            }
-          }
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    fetchUserData();
-  }, [id, rental]);
+      BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
-  const previousPage = () => {
-    navigation.goBack();
-  };
-
+      return () =>
+        BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    }, [navigation]),
+  );
   return (
     <View style={styles.container}>
-      <View style={{marginBottom: 5}}>
-        <BackButton goBack={previousPage} />
+      <View style={{marginBottom: 0}}>
+        <BackHeader navigation={navigation} title={title} />
       </View>
-      <View style={styles.contentContainer}>
-        <Text style={styles.title}>{title}</Text>
+      <ScrollView contentContainerStyle={styles.contentContainer}>
         <View style={styles.infoContainer}>
           <Icon type="fa" name="map" />
           <Text style={styles.address}>{addressName} - </Text>
           <Text style={styles.statusText}>For Rent</Text>
         </View>
         <View style={styles.sliderContainer}>
-          <PropertyThumbnailSlider pics={pics} />
+          <CarouselComponent pics={pics} />
         </View>
         <View>
           <PropertyCost price={pricePerMonth} frequency={rentFrequency} />
@@ -92,7 +73,7 @@ const RentalDetailsScreen = ({navigation, route}) => {
             <Text style={styles.description}>{propertyDetails}</Text>
           </TextContentBox>
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 };
@@ -103,7 +84,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f7f8f9',
   },
   contentContainer: {
-    flex: 1,
     paddingTop: 34,
     paddingHorizontal: 6,
   },
@@ -116,7 +96,7 @@ const styles = StyleSheet.create({
   infoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 5,
+    marginBottom: 3,
   },
   address: {
     fontWeight: 'normal',
@@ -132,9 +112,8 @@ const styles = StyleSheet.create({
   sliderContainer: {
     alignItems: 'center',
     backgroundColor: 'white',
-    padding: 1.5,
-    paddingBottom: 5,
-    marginBottom: 30,
+    paddingBottom: 1,
+    marginBottom: 3,
   },
   description: {
     fontWeight: 'normal',

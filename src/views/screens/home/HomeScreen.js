@@ -4,6 +4,7 @@ import {
   BackHandler,
   PermissionsAndroid,
   Platform,
+  StatusBar,
 } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import React, {useEffect, useState} from 'react';
@@ -87,6 +88,11 @@ const HomeScreen = () => {
   }, []);
   return (
     <View style={styles.container}>
+      <StatusBar
+        barStyle="dark-content"
+        translucent={false}
+        backgroundColor="gray"
+      />
       <Header />
       <HeroBanner />
       {loading ? (

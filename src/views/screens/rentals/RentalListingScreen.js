@@ -1,8 +1,7 @@
 import React, {useState, useEffect} from 'react';
-import {ScrollView, View, Text, StyleSheet, FlatList} from 'react-native';
+import {View, Text, StyleSheet, FlatList} from 'react-native';
 import {SearchBar, Slider} from 'react-native-elements';
 import Header from '../../../Navigation/Header';
-import COLORS from '../../../consts/colors';
 import RentalCard from '../../../components/rental/RentalCard';
 import {getPagedRentals} from '../../../services/RentalService';
 
@@ -63,7 +62,7 @@ const RentalListingScreen = () => {
           value={maxPrice}
           onValueChange={value => setMaxPrice(value)}
           minimumValue={0}
-          maximumValue={500000}
+          maximumValue={5000000}
           step={10000}
           trackStyle={styles.sliderTrack}
           thumbStyle={styles.sliderThumb}
@@ -73,12 +72,7 @@ const RentalListingScreen = () => {
           UGX {minPrice} - UGX {maxPrice}
         </Text>
       </View>
-      <ScrollView contentContainerStyle={styles.gridContainer}>
-        {/* {rentals
-          ? rentals.map(property => (
-              <RentalCard key={property.id} rental={property} />
-            ))
-          : renderSkeleton()} */}
+      <View style={styles.gridContainer}>
         {rentals ? (
           <FlatList
             data={rentals}
@@ -87,7 +81,7 @@ const RentalListingScreen = () => {
         ) : (
           renderSkeleton()
         )}
-      </ScrollView>
+      </View>
     </View>
   );
 };
@@ -104,7 +98,7 @@ const styles = StyleSheet.create({
   },
   priceRange: {
     marginVertical: 10,
-    paddingHorizontal:6
+    paddingHorizontal: 6,
   },
   priceLabel: {
     fontSize: 18,

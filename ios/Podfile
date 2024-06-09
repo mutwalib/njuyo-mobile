@@ -18,6 +18,8 @@ target 'NjuyoMobile' do
 
   pod 'RNGestureHandler', :path => '../node_modules/react-native-gesture-handler'
 
+  pod 'react-native-image-base64', :path => '../node_modules/react-native-image-base64'
+
   target 'NjuyoMobileTests' do
     inherit! :complete
     # Pods for testing

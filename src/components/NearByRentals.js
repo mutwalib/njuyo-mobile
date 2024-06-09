@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import RentalSlider from './RentalSlider';
 
-const NearByRentals = ({ nearByRentals }) => {
+const NearByRentals = () => {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -12,7 +12,7 @@ const NearByRentals = ({ nearByRentals }) => {
         <Text style={styles.subtitle}>
           Our selected vacant rentals now in this area 
         </Text>
-        <RentalSlider nearbyRentals={nearByRentals} />
+        <RentalSlider/>
       </View>
     </View>
   );

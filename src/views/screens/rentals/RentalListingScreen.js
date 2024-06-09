@@ -1,39 +1,44 @@
-import React, {useState, useEffect} from 'react';
-import {View, Text, StyleSheet, FlatList} from 'react-native';
-import {SearchBar, Slider} from 'react-native-elements';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { SearchBar, Slider } from 'react-native-elements';
 import Header from '../../../Navigation/Header';
 import RentalCard from '../../../components/rental/RentalCard';
-import {getPagedRentals} from '../../../services/RentalService';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchPagedRentals } from '../../../store/pagedRentalsSlice';
 
 const RentalListingScreen = () => {
-  const [rentals, setRentals] = useState(null);
   const [filteredRentals, setFilteredRentals] = useState([]);
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(5000000);
   const [searchText, setSearchText] = useState('');
+  const [filterVisible, setFilterVisible] = useState(false);
+  const dispatch = useDispatch();
+  const { rentalsList, loading, error, currentPage, totalPages } = useSelector(
+    state => state.rentals,
+  );
 
   useEffect(() => {
-    const fetchRentals = async () => {
-      const results = await getPagedRentals(1, 10);
-      if (results !== null) {
-        console.log(results, 'rentals');
-        if (results.rentalsCount > 0) {
-          setRentals(results.rentalsList);
-        }
-      }
-    };
-    // Filter properties based on price range and location
-    if (rentals) {
-      const filtered = rentals.filter(
+    dispatch(fetchPagedRentals({ page: 0, size: 10 }));
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (rentalsList) {
+      const filtered = rentalsList.filter(
         property =>
-          property.price >= minPrice &&
-          property.price <= maxPrice &&
-          property.location.toLowerCase().includes(searchText.toLowerCase()),
+          property.pricePerMonth >= minPrice &&
+          property.pricePerMonth <= maxPrice &&
+          property.addressName.toLowerCase().includes(searchText.toLowerCase()),
       );
       setFilteredRentals(filtered);
     }
-    fetchRentals();
-  }, [minPrice, maxPrice, searchText]);
+  }, [rentalsList, minPrice, maxPrice, searchText]);
+
+  const loadMoreRentals = () => {
+    if (currentPage < totalPages - 1) {
+      dispatch(fetchPagedRentals({ page: currentPage + 1, size: 10 }));
+    }
+  };
+
   const renderSkeleton = () => (
     <View style={styles.skeletonContainer}>
       {[...Array(4)].map((_, index) => (
@@ -46,9 +51,9 @@ const RentalListingScreen = () => {
       ))}
     </View>
   );
-  return (
-    <View style={styles.container}>
-      <Header />
+
+  const renderHeader = () => (
+    <>
       <SearchBar
         placeholder="Search location..."
         onChangeText={setSearchText}
@@ -56,32 +61,66 @@ const RentalListingScreen = () => {
         lightTheme
         containerStyle={styles.searchBar}
       />
-      <View style={styles.priceRange}>
-        <Text style={styles.priceLabel}>Price Range</Text>
-        <Slider
-          value={maxPrice}
-          onValueChange={value => setMaxPrice(value)}
-          minimumValue={0}
-          maximumValue={5000000}
-          step={10000}
-          trackStyle={styles.sliderTrack}
-          thumbStyle={styles.sliderThumb}
-          thumbTintColor="#007BFF"
-        />
-        <Text>
-          UGX {minPrice} - UGX {maxPrice}
+      <TouchableOpacity
+        style={styles.filterToggle}
+        onPress={() => setFilterVisible(!filterVisible)}
+      >
+        <Text style={styles.filterToggleText}>
+          {filterVisible ? 'Hide Filters' : 'Show Filters'}
         </Text>
-      </View>
-      <View style={styles.gridContainer}>
-        {rentals ? (
-          <FlatList
-            data={rentals}
-            numColumns={2}
-            renderItem={({item}) => <RentalCard rental={item} />}></FlatList>
-        ) : (
-          renderSkeleton()
-        )}
-      </View>
+      </TouchableOpacity>
+      {filterVisible && (
+        <View style={styles.priceRange}>
+          <Text style={styles.priceLabel}>Price Range</Text>
+          <Slider
+            value={maxPrice}
+            onValueChange={value => setMaxPrice(value)}
+            minimumValue={0}
+            maximumValue={5000000}
+            step={10000}
+            trackStyle={styles.sliderTrack}
+            thumbStyle={styles.sliderThumb}
+            thumbTintColor="#007BFF"
+          />
+          <Text>
+            UGX {minPrice} - UGX {maxPrice}
+          </Text>
+        </View>
+      )}
+    </>
+  );
+
+  return (
+    <View style={styles.container}>
+      <Header />
+      {renderHeader()}
+      <FlatList
+        // ListHeaderComponent={renderHeader}
+        data={filteredRentals}
+        numColumns={2}
+        renderItem={({ item }) => <RentalCard rental={item} />}
+        keyExtractor={item => item.id.toString()}
+        ListEmptyComponent={
+          loading ? (
+            renderSkeleton()
+          ) : (
+            <View style={{ alignContent: 'center', alignItems: 'center' }}>
+              <Text>No rentals match this search criteria.</Text>
+            </View>
+          )
+        }
+        onEndReached={loadMoreRentals}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          currentPage < totalPages - 1 && (
+            <View style={styles.loadMoreContainer}>
+              <Text style={styles.loadMoreText} onPress={loadMoreRentals}>
+                Load More
+              </Text>
+            </View>
+          )
+        }
+      />
     </View>
   );
 };
@@ -95,6 +134,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderBottomColor: 'transparent',
     borderTopColor: 'transparent',
+  },
+  filterToggle: {
+    padding: 10,
+    alignItems: 'center',
+  },
+  filterToggleText: {
+    color: 'blue',
+    fontWeight: 'bold',
   },
   priceRange: {
     marginVertical: 10,
@@ -142,6 +189,18 @@ const styles = StyleSheet.create({
     height: 20,
     backgroundColor: '#ccc',
     marginBottom: 10,
+  },
+  loadMoreContainer: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  loadMoreText: {
+    color: 'blue',
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
 

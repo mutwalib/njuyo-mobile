@@ -1,15 +1,18 @@
 import React from 'react';
 import {ScrollView, View, StyleSheet} from 'react-native';
 import RentalCard from './rental/RentalCard';
+import {useSelector} from 'react-redux';
 
-const RentalSlider = ({nearbyRentals}) => {
+const RentalSlider = () => {
+  const {nearestRentals} = useSelector(state => state.nearestRentals);
+
   return (
     <ScrollView
       horizontal={true}
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.sliderContainer}>
-      {nearbyRentals &&
-        nearbyRentals.map(rental => (
+      {nearestRentals &&
+        nearestRentals.map(rental => (
           <View key={rental.id} style={styles.slide}>
             <RentalCard rental={rental} />
           </View>

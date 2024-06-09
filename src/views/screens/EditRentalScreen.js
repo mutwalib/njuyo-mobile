@@ -9,27 +9,20 @@ import {
   Platform,
   Image,
 } from 'react-native';
+import axios from 'axios';
+import NetInfo from '@react-native-community/netinfo';
+import {getRentalById} from '../../services/RentalService';
+import {fetchAndCacheImage} from '../../services/PictureService';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import COLORS from '../../consts/colors';
+import BackHeader from '../../Navigation/BackHeader';
 import CheckBox from '@react-native-community/checkbox';
 import {RadioButton} from 'react-native-paper';
 import {Text, Button, Input} from 'react-native-elements';
-import BackHeader from '../../Navigation/BackHeader';
-import {createRental, getRentalFrequencies} from '../../services/RentalService';
-import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-import Icon from '../../consts/Icon';
-import Geolocation from '@react-native-community/geolocation';
 import Modal from 'react-native-modal';
-import COLORS from '../../consts/colors';
-import {useNavigation} from '@react-navigation/native';
-import SelectDropdown from 'react-native-select-dropdown';
-import axiosClient from '../../services/api/api';
-import {useSelector} from 'react-redux';
-import NetInfo from '@react-native-community/netinfo';
-import Spinner from 'react-native-loading-spinner-overlay';
-import {Image as CompressorImage} from 'react-native-compressor';
 
-export default function AddRentalScreen() {
-  const navigation = useNavigation();
-  const owner = useSelector(state => state.user.user);
+const EditRentalScreen = ({navigation, route}) => {
+  const {rentalId} = route.params;
   const [step, setStep] = useState(1);
   const [rentalFreqs, setRentalFreqs] = useState([]);
   const [isCurrentLocation, setIsCurrentLocation] = useState(true);
@@ -44,34 +37,6 @@ export default function AddRentalScreen() {
   const [isStep3Valid, setIsStep3Valid] = useState(false);
   const [isStep4Valid, setIsStep4Valid] = useState(false);
   const [isStep5Valid, setIsStep5Valid] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    titles: '',
-    currency: 'UGX',
-    price: '',
-    nmonths: '',
-    utilities: '',
-    frequency: '',
-    conditions: '',
-    address: '',
-    province: '',
-    postal_code: '',
-    isCurrentlocation: true,
-    village: '',
-    is_self_contained: true,
-    kitchen_inside: true,
-    parking: true,
-    bedrooms: '',
-    livingrooms: '',
-    amenities: '',
-    toilet: '',
-    surface_area: '',
-    images: [],
-    property_details: '',
-    villageId: '',
-    latitude: '',
-    longitude: '',
-  });
   const toggleModal = () => {
     setIsModalVisible(!isModalVisible);
   };
@@ -123,146 +88,79 @@ export default function AddRentalScreen() {
   const handleNextStep = () => {
     setStep(step + 1);
   };
-  const rentalFrequencies = async () => {
-    const response = await getRentalFrequencies();
-    if (response !== null) {
-      if (response?.status === 200) {
-        setRentalFreqs(response.data);
-      }
-    }
-  };
-
+  const [formData, setFormData] = useState({
+    titles: '',
+    currency: '',
+    property_details: '',
+    price: '',
+    nmonths: '',
+    frequency: '',
+    utilities: '',
+    amenities: '',
+    toilet: '',
+    bedrooms: '',
+    parking: false,
+    kitchen_inside: false,
+    is_self_contained: false,
+    conditions: '',
+    latitude: '',
+    longitude: '',
+    address: '',
+    postal_code: '',
+    province: '',
+    external_id: '',
+    images: [],
+  });
+  const [owner, setOwner] = useState(null);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
-    const requestLocationPermission = async () => {
-      if (Platform.OS === 'android') {
-        try {
-          const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-            {
-              title: 'Location Permission',
-              message: 'App needs access to your location.',
-              buttonPositive: 'OK',
-            },
-          );
-          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-            console.log('Location permission granted');
-            getCurrentLocation();
-          } else {
-            console.log('Location permission denied');
-          }
-        } catch (err) {
-          console.warn(err);
-        }
-      } else {
-        getCurrentLocation();
+    const fetchRental = async () => {
+      try {
+        const response = await getRentalById(rentalId);
+        const rental = response.data;
+        const imageNames = rental.pics || [];
+        const cachedImages = await Promise.all(
+          imageNames.map(async imageName => {
+            const uri = await fetchAndCacheImage(imageName.picUrl);
+            return {uri, name: imageName, type: 'image/jpeg'};
+          }),
+        );
+        setFormData({
+          titles: rental.title,
+          currency: rental.currency,
+          property_details: rental.propertyDetails,
+          price: rental.pricePerMonth,
+          nmonths: rental.initialPayMonth,
+          frequency: rental.rentFrequency,
+          utilities: rental.utilitiesToPay,
+          amenities: rental.amenities,
+          toilet: rental.noOfToilets,
+          bedrooms: rental.noOfRooms,
+          parking: rental.isParkingAvailable,
+          kitchen_inside: rental.isKitchenIn,
+          is_self_contained: rental.isSelfContained,
+          conditions: rental.conditionsOfStay,
+          latitude: rental.latitude,
+          longitude: rental.longitude,
+          address: rental.addressName,
+          postal_code: rental.postalCode,
+          province: rental.province,
+          external_id: rental.externalId,
+          images: cachedImages,
+        });
+        setOwner(rental.owner);
+      } catch (error) {
+        console.error('Error fetching rental data:', error);
+        Alert.alert('Error fetching rental data. Please try again.');
+      } finally {
+        setLoading(false);
       }
     };
-    const getCurrentLocation = () => {
-      Geolocation.getCurrentPosition(
-        position => {
-          const {latitude, longitude} = position.coords;
-          console.log(latitude);
-          const googleLocation = `${latitude},${longitude}`;
-          console.log(googleLocation, 'location');
-          setFormData({...formData, latitude: latitude});
-          setFormData({...formData, longitude: longitude});
-        },
-        error => {
-          console.log(error.message);
-        },
-        {enableHighAccuracy: false, timeout: 40000000, maximumAge: 1000000},
-      );
-    };
-    requestLocationPermission();
-    // Clean up function
-    return () => {
-      // Clear any location watch or tasks here if needed
-    };
-  }, []);
 
-  const handlePreviousStep = () => {
-    setStep(step - 1);
-  };
-  const handleSubmitForm = useCallback(async () => {
-    const netInfoState = await NetInfo.fetch();
-    if (!netInfoState.isConnected) {
-      Alert.alert(
-        'No internet connection',
-        'Please check your internet connection and try again.',
-      );
-      return;
-    }
-    if (owner === null) {
-      Alert.alert('You are not authenticated to perform this action!');
-      return;
-    }
-    if (!formData.images.length) {
-      Alert.alert('Please select at least one image');
-      return;
-    }
-    const {roles, ...ownerWithoutRoles} = owner;
-    const propertyData = {
-      title: formData.titles,
-      owner: ownerWithoutRoles,
-      currency: formData.currency,
-      propertyDetails: formData.property_details,
-      pricePerMonth: formData.price,
-      initialPayMonth: formData.nmonths,
-      rentFrequency: formData.frequency,
-      utilitiesToPay: formData.utilities,
-      amenities: formData.amenities,
-      noOfToilets: formData.toilet,
-      noOfRooms: formData.bedrooms,
-      isParkingAvailable: formData.parking,
-      isKitchenIn: formData.kitchen_inside,
-      isSelfContained: formData.is_self_contained,
-      conditionsOfStay: formData.conditions,
-      latitude: formData.isCurrentlocation ? formData?.latitude : 0.0,
-      longitude: formData.isCurrentlocation ? formData?.longitude : 0.0,
-      addressName: formData.address,
-      postalCode: formData.postal_code,
-      province: formData.province,
-    };
-    // const fileObjects = formData.images.map(image => image.base64);
-    const compressedImages = await Promise.all(
-      formData.images.map(async image => {
-        try {
-          const compressedImage = CompressorImage.compress(image.file.uri, {
-            compressionMethod: 'manual',
-            input: 'uri',
-            quality: 0.8,
-            maxWidth: 800,
-            maxHeight: 600,
-            output: 'jpg',
-            returnableOutputType: 'uri',
-          });
-          return compressedImage;
-        } catch (error) {
-          console.error('Compression error:', error);
-          return null;
-        }
-      }),
-    );
-    console.log('compressedImage', compressedImages);
-    const rentalData = {
-      property: propertyData,
-      // files: fileObjects,
-      files: compressedImages,
-    };
-    setLoading(true);
-    const resp = await createRental(rentalData);
-    console.log('resp', resp);
-    if (resp?.status === 202) {
-      setLoading(false);
-      Alert.alert('Form submited!');
-      navigation.goBack();
-    } else {
-      setLoading(false);
-      Alert.alert('Error Registering rental.' + resp._response);
-    }
-  }, [formData, navigation]);
+    fetchRental();
+  }, [rentalId]);
 
-  const handleImageUpload = imageNumber => {
+  const handleImagePick = async (imageNumber) => {
     Alert.alert(
       'Choose Image Source',
       'Select the source for your image',
@@ -279,31 +177,12 @@ export default function AddRentalScreen() {
       {cancelable: true},
     );
   };
-
-  const handleImageRemoval = imageNumber => {
-    const filteredImages = formData.images.filter(
-      image => image.id !== imageNumber,
-    );
-    setFormData(prevFormData => ({
-      ...prevFormData,
-      images: filteredImages,
-    }));
-  };
-  const onSetCurrentLocation = () => {
-    setIsCurrentLocation(!isCurrentLocation);
-    setUseCurrentLocation(!useCurrentLocation);
-  };
-
-  const onSelectVillage = value => {
-    setSelectedVillage(value);
-  };
   const launchCameraAction = imageNumber => {
     const options = {
       mediaType: 'photo',
       maxWidth: 800,
       maxHeight: 600,
       quality: 1,
-      includeBase64: true,
     };
     launchCamera(options, response => {
       if (response.didCancel) {
@@ -311,26 +190,20 @@ export default function AddRentalScreen() {
       } else if (response.error) {
         console.log('ImagePicker Error: ', response.error);
       } else {
-        let uriSource = {uri: response.assets?.[0].uri};
-        let base64Source = {base64: response.assets?.[0].base64};
+        let source = {uri: response.assets?.[0].uri};
         setFormData(prevFormData => ({
           ...prevFormData,
-          images: [
-            ...prevFormData.images,
-            {id: imageNumber, file: uriSource, base64: base64Source},
-          ],
+          images: [...prevFormData.images, {id: imageNumber, file: source}],
         }));
       }
     });
   };
-
   const launchImageLibraryAction = imageNumber => {
     const options = {
       mediaType: 'photo',
       maxWidth: 800,
       maxHeight: 600,
       quality: 1,
-      includeBase64: true,
     };
     launchImageLibrary(options, response => {
       if (response.didCancel) {
@@ -338,43 +211,14 @@ export default function AddRentalScreen() {
       } else if (response.errorCode) {
         console.log('ImagePicker Error: ', response.errorMessage);
       } else {
-        let uriSource = {uri: response.assets?.[0].uri};
-        let base64Source = {base64: response.assets?.[0].base64};
+        let source = {uri: response.assets?.[0].uri};
         setFormData(prevFormData => ({
           ...prevFormData,
-          images: [
-            ...prevFormData.images,
-            {id: imageNumber, file: uriSource, base64: base64Source},
-          ],
+          images: [...prevFormData.images, {id: imageNumber, file: source}],
         }));
       }
     });
   };
-  useEffect(() => {
-    axiosClient.get(`/village`).then(response => {
-      setVillages(response.data);
-    });
-  }, []);
-
-  // let locations = [...villages];
-  // const filterVillages = useCallback(
-  //   inputValue => {
-  //     if (locations === null || locations === 'undefined' || locations === '') {
-  //       return [];
-  //     } else {
-  //       return locations.filter(i =>
-  //         i.name?.toLowerCase().includes(inputValue.toLowerCase()),
-  //       );
-  //     }
-  //   },
-  //   [locations],
-  // );
-  const loadOptions = (inputValue, callback) => {
-    setTimeout(() => {
-      callback(filterVillages(inputValue));
-    }, 1000);
-  };
-  // Android Permissions
   const requestCameraPermission = async () => {
     try {
       // return error;
@@ -397,7 +241,14 @@ export default function AddRentalScreen() {
       console.warn(err);
     }
   };
-
+  const rentalFrequencies = async () => {
+    const response = await getRentalFrequencies();
+    if (response !== null) {
+      if (response?.status === 200) {
+        setRentalFreqs(response.data);
+      }
+    }
+  };
   const requestStoragePermission = async () => {
     try {
       const granted = await PermissionsAndroid.request(
@@ -420,9 +271,85 @@ export default function AddRentalScreen() {
     }
   };
 
+  const handleSubmitForm = useCallback(async () => {
+    try {
+      const netInfoState = await NetInfo.fetch();
+      if (!netInfoState.isConnected) {
+        Alert.alert(
+          'No internet connection',
+          'Please check your internet connection and try again.',
+        );
+        return;
+      }
+
+      if (!owner) {
+        Alert.alert('You are not authenticated to perform this action!');
+        return;
+      }
+
+      const propertyData = {
+        title: formData.titles,
+        owner: owner,
+        currency: formData.currency,
+        propertyDetails: formData.property_details,
+        pricePerMonth: formData.price,
+        initialPayMonth: formData.nmonths,
+        rentFrequency: formData.frequency,
+        utilitiesToPay: formData.utilities,
+        amenities: formData.amenities,
+        noOfToilets: formData.toilet,
+        noOfRooms: formData.bedrooms,
+        isParkingAvailable: formData.parking,
+        isKitchenIn: formData.kitchen_inside,
+        isSelfContained: formData.is_self_contained,
+        conditionsOfStay: formData.conditions,
+        latitude: formData.latitude || 0.0,
+        longitude: formData.longitude || 0.0,
+        addressName: formData.address,
+        postalCode: formData.postal_code,
+        province: formData.province,
+      };
+
+      const fileObjects = formData.images.map(image => ({
+        uri: image.file ? image.file.uri : image.uri,
+        name: image.name || `image_${Date.now()}.jpg`,
+        type: image.type || 'image/jpeg',
+      }));
+
+      const rentalData = {
+        property: JSON.stringify(propertyData),
+        files: fileObjects,
+      };
+
+      const response = await axios.post(
+        `/property/update/rental/${rentalId}`,
+        rentalData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        },
+      );
+
+      if (response.status === 202) {
+        Alert.alert('Rental updated successfully!');
+        navigation.goBack();
+      } else {
+        Alert.alert('Error updating rental. Please try again.');
+      }
+    } catch (error) {
+      console.log('Error updating rental:', error);
+      Alert.alert('An error occurred. Please try again.' + error);
+    }
+  }, [formData, owner, rentalId, navigation]);
+
+  if (loading) {
+    return <Text>Loading...</Text>;
+  }
+
   return (
     <View style={styles.container}>
-      <BackHeader navigation={navigation} title={`Add Rental`} />
+      <BackHeader navigation={navigation} title={`Edit Rental `} />
       <ScrollView style={styles.scrollView}>
         <View style={styles.formContainer}>
           {step === 1 && (
@@ -430,13 +357,11 @@ export default function AddRentalScreen() {
               <Text h4>Basic Information</Text>
               <Input
                 label="Title"
-                placeholder="ex: Modern Apartment Downtown..."
                 value={formData.titles}
                 onChangeText={text => setFormData({...formData, titles: text})}
               />
               <Input
                 label="Currency"
-                placeholder="Currency"
                 value={formData.currency}
                 onChangeText={text =>
                   setFormData({...formData, currency: text})
@@ -444,21 +369,18 @@ export default function AddRentalScreen() {
               />
               <Input
                 label="Price"
-                placeholder="Ex: 500,000"
                 value={formData.price}
                 keyboardType="numeric"
                 onChangeText={text => setFormData({...formData, price: text})}
               />
               <Input
                 label="Initial payment (New tenant pay at start)"
-                placeholder="Ex: 3 (Ex: Meaning three Months)"
                 value={formData.nmonths}
                 keyboardType="numeric"
                 onChangeText={text => setFormData({...formData, nmonths: text})}
               />
               <Input
                 label="Utilities to pay (Client's seperate utilities)"
-                placeholder="Ex: Electricity"
                 value={formData.utilities}
                 onChangeText={text =>
                   setFormData({...formData, utilities: text})
@@ -496,7 +418,6 @@ export default function AddRentalScreen() {
               </View>
               <Input
                 label="Conditions of stay"
-                placeholder="Any brief rules"
                 multiline={true}
                 value={formData.conditions}
                 onChangeText={text =>
@@ -510,13 +431,11 @@ export default function AddRentalScreen() {
               <Text h4>Address Information</Text>
               <Input
                 label="Address"
-                placeholder="Address of the rental"
                 value={formData.address}
                 onChangeText={text => setFormData({...formData, address: text})}
               />
               <Input
                 label="District"
-                placeholder="District of the rental"
                 value={formData.province}
                 onChangeText={text =>
                   setFormData({...formData, province: text})
@@ -705,7 +624,6 @@ export default function AddRentalScreen() {
               <Text h4>Description</Text>
               <Input
                 label="Property Brief"
-                placeholder="Enter property brief"
                 multiline={true}
                 value={formData.property_details}
                 onChangeText={text =>
@@ -715,7 +633,6 @@ export default function AddRentalScreen() {
               />
               <Input
                 label="Additional Info"
-                placeholder="Enter additional info"
                 multiline={true}
                 value={formData.additional_info}
                 onChangeText={text =>
@@ -729,6 +646,13 @@ export default function AddRentalScreen() {
             <>
               <Text h4>Add pictures</Text>
               <View style={styles.imageContainer}>
+                {/* {formData.images.map((image, index) => (
+                  <Image
+                    key={index}
+                    source={{uri: image.uri}}
+                    style={{width: 100, height: 100}}
+                  />
+                ))} */}
                 {[...Array(8)].map((_, index) => (
                   <View key={index}>
                     {formData.images.find(image => image.id === index + 1) ? (
@@ -750,7 +674,7 @@ export default function AddRentalScreen() {
                     ) : (
                       <TouchableOpacity
                         style={styles.addButton}
-                        onPress={() => handleImageUpload(index + 1)}>
+                        onPress={() => handleImagePick(index + 1)}>
                         <Icon type="fa" name="plus" />
                         <Text style={styles.addButtonText}>
                           Image {index + 1}
@@ -803,6 +727,8 @@ export default function AddRentalScreen() {
               </View>
             </>
           )}
+
+          {/* <Button title="Update Rental" onPress={handleSubmitForm} /> */}
         </View>
       </ScrollView>
       <View
@@ -815,14 +741,9 @@ export default function AddRentalScreen() {
           paddingHorizontal: 20,
           marginBottom: 15,
         }}>
-        <Spinner
-          visible={loading}
-          textContent={'submitting...'}
-          textStyle={styles.spinnerTextStyle}
-        />
         {step > 1 && <Button title="Previous" onPress={handlePreviousStep} />}
         <Button
-          title={step === 6 ? 'Submit' : 'Next'}
+          title={step === 6 ? 'Update Rental' : 'Next'}
           onPress={step === 6 ? handleSubmitForm : handleNextStep}
           disabled={
             (step === 1 && !isStep1Valid) ||
@@ -843,8 +764,7 @@ export default function AddRentalScreen() {
       </View>
     </View>
   );
-}
-
+};
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -1007,7 +927,5 @@ const styles = StyleSheet.create({
     fontSize: 28,
     marginRight: 8,
   },
-  spinnerTextStyle: {
-    color: '#FFF',
-  },
 });
+export default EditRentalScreen;

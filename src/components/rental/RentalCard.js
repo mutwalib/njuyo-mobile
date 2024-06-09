@@ -8,12 +8,13 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import Stamp from '../Stamp';
 import {useRentalFormats} from '../../helpers/hooks/useRentalFormats';
 import CustomButton from '../CustomButton';
 import Icon from '../../consts/Icon';
 import {useNavigation} from '@react-navigation/native';
+import Geolocation from '@react-native-community/geolocation';
 import axios from 'axios';
 import {
   fetchAndCacheImage,
@@ -22,6 +23,7 @@ import {
   rentalPictures,
 } from '../../services/PictureService';
 import {bookRental, checkBooked} from '../../services/RentalService';
+import {getRentalsNearYou} from '../../store/nearestRentalSlice';
 
 const defaultImage = require('../../assets/default_house-img.png');
 
@@ -40,6 +42,7 @@ const RentalCard = ({rental}) => {
     takenStatus,
   } = useRentalFormats({rental});
   const user = useSelector(state => state.user.user);
+  const dispatch = useDispatch();
 
   const [displayImage, setDisplayImage] = useState(defaultImage);
   const [isBooked, setIsBooked] = useState(false);
@@ -73,7 +76,12 @@ const RentalCard = ({rental}) => {
   const handleViewRental = () => {
     navigation.navigate('rental_details', rental);
   };
-  const handleEditRental = () => {};
+  const handleEditRental = () => {
+    const rentalId = rental.id;
+    if (rentalId) {
+      navigation.navigate('edit_rental', {rentalId});
+    }
+  };
   const handleOnBookRental = async () => {
     setIsBookButtonDisabled(true);
     try {
@@ -98,6 +106,7 @@ const RentalCard = ({rental}) => {
       });
       if (response?.status === 200) {
         setIsBooked(true);
+        getCurrentLocation();
         Alert.alert('Booking Successful', response.data, [{text: 'OK'}], {
           cancelable: false,
         });
@@ -111,6 +120,20 @@ const RentalCard = ({rental}) => {
     } finally {
       setIsBookButtonDisabled(false);
     }
+  };
+  const getCurrentLocation = () => {
+    Geolocation.getCurrentPosition(
+      position => {
+        const {latitude, longitude} = position.coords;
+        const googleLocation = `${latitude},${longitude}`;
+        console.log(googleLocation, 'location');
+        dispatch(getRentalsNearYou(googleLocation));
+      },
+      error => {
+        console.log(error.message);
+      },
+      {enableHighAccuracy: false, timeout: 40000, maximumAge: 10000},
+    );
   };
   return (
     <ScrollView contentContainerStyle={styles.card}>

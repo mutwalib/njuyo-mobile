@@ -17,7 +17,7 @@ const RentalBookingScene = () => {
     const fetchBookings = async () => {
       try {
         const response = await getMyBookings(user.id);
-        console.log('response', response?.data);
+        console.log('bookings', response?.data);
         if (response.status === 200) {
           setBookings(response.data);
         }

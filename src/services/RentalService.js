@@ -1,4 +1,5 @@
-import axiosClient from './api/api';
+import axios, {Axios} from 'axios';
+import axiosClient, {bURL} from './api/api';
 const getAllRentals = async () => {
   try {
     const response = axiosClient.get(`/property/rentals`);
@@ -49,7 +50,6 @@ export const getRentalById = async id => {
     throw error;
   }
 };
-
 const upload = (file, onUploadProgress) => {
   let formData = new FormData();
   formData.append('file', file);
@@ -60,22 +60,48 @@ const upload = (file, onUploadProgress) => {
     onUploadProgress,
   });
 };
-
-export const createRental = async formData => {
-  return axiosClient
-    .post('/property/create/rental', formData, {
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'multipart/form-data',
+export const createRental = async rentalData => {
+  try {
+    // const base64Images = rentalData.files.map(image => image.base64);
+    // const data = JSON.stringify({
+    //   property: JSON.stringify(rentalData.property),
+    //   files: rentalData.files,
+    // });
+    const formData = new FormData();
+    formData.append('property', JSON.stringify(rentalData.property));
+    const files = rentalData.files;
+    for (let i = 0; i < files.length; i++) {
+      formData.append('files', {
+        uri: files[i],
+        type: 'image/jpeg',
+        filename: `${i + 1}.jpg`,
+      });
+    }
+    // formData.append('Content-Type', 'image/jpg');
+    console.log('formData', formData);
+    const response = axios.post(
+      bURL + '/api/property/create/rental',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Api-Key': '	4RPJln2MkX0_2UAEmMhN7sAfQkFDCzfpK91hAu3LM5I', //remote
+        },
       },
-    })
-    .then(response => {
-      return response;
-    })
-    .catch(error => {
-      console.log('Thrown error', error);
-      throw error;
-    });
+    );
+    return await response;
+  } catch (error) {
+    if (error.response) {
+      console.log('Error response:', error.response);
+      return error.response;
+    } else if (error.request) {
+      console.log('Error request:', error.request);
+      return error.request;
+    } else {
+      console.log('Error message:', error.message);
+      return error.message;
+    }
+  }
 };
 export const updateRental = async updateData => {
   const formData = new FormData();
@@ -95,25 +121,38 @@ export const updateRental = async updateData => {
       response.status === 202 ? response : null;
     })
     .catch(error => {
-      return error;
+      if (error.response) {
+        console.log('Error response:', error.response);
+      } else if (error.request) {
+        console.log('Error request:', error.request);
+      } else {
+        console.log('Error message:', error.message);
+      }
     });
 };
 export const bookRental = async ({rentalId, userId}) => {
+  // console.log('rentalId', rentalId);
+  // console.log('userId', userId);
+  const bookRequest = {propertyId: rentalId, customerId: userId};
+  console.log('bookRequest', bookRequest);
   return axiosClient
-    .post(
-      '/property/rental/book',
-      {propertyId: rentalId, customerId: userId},
-      {
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'multipart/form-data',
-        },
+    .post('/property/rental/book', bookRequest, {
+      headers: {
+        Accept: 'application/json',
       },
-    )
+    })
     .then(response => {
+      console.log('response', response);
       return response;
     })
     .catch(error => {
+      if (error.response) {
+        console.log('Error response:', error.response);
+      } else if (error.request) {
+        console.log('Error request:', error.request);
+      } else {
+        console.log('Error message:', error.message);
+      }
       return error;
     });
 };
@@ -129,24 +168,15 @@ export const getBookingsOnRental = async rentalId => {
 };
 export const scheduleAppointment = async appointmentData => {
   return axiosClient
-    .post(
-      '/booking/rental/schedule',
-      {
-        rentalId: appointmentData.rentalId,
-        customerId: appointmentData.customerId,
-        bookingId: appointmentData.bookingId,
-        scheduleDate: appointmentData.scheduleDate,
-        scheduleTime: appointmentData.scheduleTime,
-        fulfilled: appointmentData.fulfilled,
-        rescheduleCount: appointmentData.rescheduleCount,
-      },
-      {
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'multipart/form-data',
-        },
-      },
-    )
+    .post('/booking/rental/schedule', {
+      rentalId: appointmentData.rentalId,
+      customerId: appointmentData.customerId,
+      bookingId: appointmentData.bookingId,
+      scheduleDate: appointmentData.scheduleDate,
+      scheduleTime: appointmentData.scheduleTime,
+      fulfilled: appointmentData.fulfilled,
+      rescheduleCount: appointmentData.rescheduleCount,
+    })
     .then(response => {
       return response;
     })
@@ -172,6 +202,7 @@ export const receiveBooking = async bookId => {
 };
 export const getSchedule = async indivBooking => {
   try {
+    console.log('indivBooking-----', indivBooking);
     const response = await axiosClient.post(
       `/booking/rental/appointment/${indivBooking.bookId}`,
     );
@@ -306,7 +337,7 @@ export const customerConfirmInspection = async booking => {
     );
     return response;
   } catch (error) {
-    return error.response;
+    return error;
   }
 };
 export const ownerConfirmInspection = async booking => {

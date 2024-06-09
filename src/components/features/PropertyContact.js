@@ -120,7 +120,7 @@ const PropertyContact = ({owner, agentId, rentalId}) => {
     setIsEditButtonDisabled(true);
     try {
       if (rentalId) {
-        navigation.replace(`/editRental/${rentalId}`);
+        navigation.navigate('edit_rental', {rentalId});
       }
     } catch (error) {
       console.error(error);
@@ -128,7 +128,6 @@ const PropertyContact = ({owner, agentId, rentalId}) => {
       setIsEditButtonDisabled(false);
     }
   };
-
   const handleOnDelete = async () => {
     setIsDeleteButtonDisabled(true);
     const data = {id: rentalId, userId: user.id};
@@ -141,7 +140,6 @@ const PropertyContact = ({owner, agentId, rentalId}) => {
       setIsDeleteButtonDisabled(false);
     }
   };
-
   return (
     <View style={styles.container}>
       <View style={styles.innerContainer}>
@@ -151,7 +149,6 @@ const PropertyContact = ({owner, agentId, rentalId}) => {
               <Text>Owned By: {owner}</Text>
             </View>
           )}
-
           <View style={styles.buttonContainer}>
             {user?.id === agentId ? (
               <View style={styles.agentButtons}>
@@ -239,5 +236,4 @@ const styles = StyleSheet.create({
     backgroundColor: 'red',
   },
 });
-
 export default PropertyContact;

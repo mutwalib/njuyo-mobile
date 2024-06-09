@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -5,27 +6,21 @@ import {
   PermissionsAndroid,
   Platform,
   StatusBar,
+  ScrollView,
 } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
-import React, {useEffect, useState} from 'react';
 import COLORS from '../../../consts/colors';
 import Header from '../../../Navigation/Header';
 import HeroBanner from '../../../components/HeroBanner';
 import NearByRentals from '../../../components/NearByRentals';
-import {getRentalsNearYou} from '../../../services/RentalService';
 import SkeletonLoading from '../../../components/SkeletonLoading';
+import { useDispatch, useSelector } from 'react-redux';
+import { getRentalsNearYou } from '../../../store/nearestRentalSlice';
 
 const HomeScreen = () => {
-  const [rentals, setRentals] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const fetchNearbyRentals = async location => {
-    const results = await getRentalsNearYou(location);
-    console.log(results);
-    if (results !== null) {
-      setRentals(results.content.slice(0, 6));
-      setLoading(false);
-    }
-  };
+  const dispatch = useDispatch();
+  const { nearestRentals, loading, error } = useSelector(state => state.nearestRentals);
+
   useEffect(() => {
     const requestLocationPermission = async () => {
       if (Platform.OS === 'android') {
@@ -51,28 +46,29 @@ const HomeScreen = () => {
         getCurrentLocation();
       }
     };
+
     const getCurrentLocation = () => {
       Geolocation.getCurrentPosition(
         position => {
-          const {latitude, longitude} = position.coords;
-          console.log(latitude);
+          const { latitude, longitude } = position.coords;
           const googleLocation = `${latitude},${longitude}`;
           console.log(googleLocation, 'location');
-          fetchNearbyRentals(googleLocation);
+          dispatch(getRentalsNearYou(googleLocation));
         },
         error => {
           console.log(error.message);
-          setLoading(false);
         },
-        {enableHighAccuracy: false, timeout: 40000000, maximumAge: 1000000},
+        { enableHighAccuracy: false, timeout: 40000, maximumAge: 10000 },
       );
     };
+
     requestLocationPermission();
-    // Clean up function
+
     return () => {
-      // Clear any location watch or tasks here if needed
+      // Clean up any location watch or tasks if needed
     };
-  }, []);
+  }, [dispatch]);
+
   useEffect(() => {
     const backAction = () => {
       BackHandler.exitApp();
@@ -86,6 +82,7 @@ const HomeScreen = () => {
 
     return () => backHandler.remove();
   }, []);
+
   return (
     <View style={styles.container}>
       <StatusBar
@@ -95,22 +92,29 @@ const HomeScreen = () => {
       />
       <Header />
       <HeroBanner />
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <SkeletonLoading />
-        </View>
-      ) : (
-        rentals && <NearByRentals nearByRentals={rentals} />
-      )}
+      <ScrollView style={styles.scrollView}>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <SkeletonLoading />
+          </View>
+        ) : (
+          nearestRentals && <NearByRentals />
+        )}
+      </ScrollView>
     </View>
   );
 };
+
 export default HomeScreen;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 0,
     backgroundColor: COLORS.white,
+  },
+  scrollView: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,

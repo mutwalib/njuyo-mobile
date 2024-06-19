@@ -26,6 +26,7 @@ import {useSelector} from 'react-redux';
 import NetInfo from '@react-native-community/netinfo';
 import Spinner from 'react-native-loading-spinner-overlay';
 import {Image as CompressorImage} from 'react-native-compressor';
+import {readFile} from 'react-native-fs';
 
 export default function AddRentalScreen() {
   const navigation = useNavigation();
@@ -69,8 +70,8 @@ export default function AddRentalScreen() {
     images: [],
     property_details: '',
     villageId: '',
-    latitude: '',
-    longitude: '',
+    latitude: 0.0,
+    longitude: 0.0,
   });
   const toggleModal = () => {
     setIsModalVisible(!isModalVisible);
@@ -100,14 +101,12 @@ export default function AddRentalScreen() {
       titles && currency && price && nmonths && utilities && frequency,
     );
   };
-
   const validateStep2 = () => {
     const {address, province, postal_code} = formData;
     setIsStep2Valid(
       address && province && (isCurrentLocation || selectedVillage),
     );
   };
-
   const validateStep3 = () => {
     const {bedrooms, livingrooms, toilet, surface_area, images} = formData;
     setIsStep3Valid(bedrooms && livingrooms && toilet && surface_area);
@@ -131,7 +130,6 @@ export default function AddRentalScreen() {
       }
     }
   };
-
   useEffect(() => {
     const requestLocationPermission = async () => {
       if (Platform.OS === 'android') {
@@ -161,7 +159,6 @@ export default function AddRentalScreen() {
       Geolocation.getCurrentPosition(
         position => {
           const {latitude, longitude} = position.coords;
-          console.log(latitude);
           const googleLocation = `${latitude},${longitude}`;
           console.log(googleLocation, 'location');
           setFormData({...formData, latitude: latitude});
@@ -179,7 +176,6 @@ export default function AddRentalScreen() {
       // Clear any location watch or tasks here if needed
     };
   }, []);
-
   const handlePreviousStep = () => {
     setStep(step - 1);
   };
@@ -223,31 +219,11 @@ export default function AddRentalScreen() {
       postalCode: formData.postal_code,
       province: formData.province,
     };
+    const fileObjects = formData.images.map(image => image.file);
     // const fileObjects = formData.images.map(image => image.base64);
-    const compressedImages = await Promise.all(
-      formData.images.map(async image => {
-        try {
-          const compressedImage = CompressorImage.compress(image.file.uri, {
-            compressionMethod: 'manual',
-            input: 'uri',
-            quality: 0.8,
-            maxWidth: 800,
-            maxHeight: 600,
-            output: 'jpg',
-            returnableOutputType: 'uri',
-          });
-          return compressedImage;
-        } catch (error) {
-          console.error('Compression error:', error);
-          return null;
-        }
-      }),
-    );
-    console.log('compressedImage', compressedImages);
     const rentalData = {
       property: propertyData,
-      // files: fileObjects,
-      files: compressedImages,
+      files: fileObjects,
     };
     setLoading(true);
     const resp = await createRental(rentalData);
@@ -256,12 +232,14 @@ export default function AddRentalScreen() {
       setLoading(false);
       Alert.alert('Form submited!');
       navigation.goBack();
+    } else if (resp?.status === 400) {
+      setLoading(false);
+      Alert.alert('Bad Request!');
     } else {
       setLoading(false);
       Alert.alert('Error Registering rental.' + resp._response);
     }
   }, [formData, navigation]);
-
   const handleImageUpload = imageNumber => {
     Alert.alert(
       'Choose Image Source',
@@ -279,7 +257,6 @@ export default function AddRentalScreen() {
       {cancelable: true},
     );
   };
-
   const handleImageRemoval = imageNumber => {
     const filteredImages = formData.images.filter(
       image => image.id !== imageNumber,
@@ -293,11 +270,10 @@ export default function AddRentalScreen() {
     setIsCurrentLocation(!isCurrentLocation);
     setUseCurrentLocation(!useCurrentLocation);
   };
-
   const onSelectVillage = value => {
     setSelectedVillage(value);
   };
-  const launchCameraAction = imageNumber => {
+  const launchCameraAction = async imageNumber => {
     const options = {
       mediaType: 'photo',
       maxWidth: 800,
@@ -305,26 +281,29 @@ export default function AddRentalScreen() {
       quality: 1,
       includeBase64: true,
     };
+
     launchCamera(options, response => {
       if (response.didCancel) {
         console.log('User cancelled image picker');
       } else if (response.error) {
         console.log('ImagePicker Error: ', response.error);
       } else {
-        let uriSource = {uri: response.assets?.[0].uri};
-        let base64Source = {base64: response.assets?.[0].base64};
+        console.log('response', response);
+        const fileExtension = response.assets?.[0].fileName.split('.').pop();
+        const imageData = {
+          uri: response.assets?.[0].uri,
+          base64: response.assets?.[0].base64,
+          type: response.assets?.[0].type,
+          name: `${imageNumber}.${fileExtension}`,
+        };
         setFormData(prevFormData => ({
           ...prevFormData,
-          images: [
-            ...prevFormData.images,
-            {id: imageNumber, file: uriSource, base64: base64Source},
-          ],
+          images: [...prevFormData.images, {id: imageNumber, file: imageData}],
         }));
       }
     });
   };
-
-  const launchImageLibraryAction = imageNumber => {
+  const launchImageLibraryAction = async imageNumber => {
     const options = {
       mediaType: 'photo',
       maxWidth: 800,
@@ -338,24 +317,35 @@ export default function AddRentalScreen() {
       } else if (response.errorCode) {
         console.log('ImagePicker Error: ', response.errorMessage);
       } else {
-        let uriSource = {uri: response.assets?.[0].uri};
-        let base64Source = {base64: response.assets?.[0].base64};
+        console.log('response.assets?.[0].base64', response.assets?.[0].base64);
+        const fileExtension = response.assets?.[0].fileName.split('.').pop();
+        const imageData = {
+          uri: response.assets?.[0].uri,
+          base64: response.assets?.[0].base64,
+          type: response.assets?.[0].type,
+          name: `${imageNumber}.${fileExtension}`,
+        };
         setFormData(prevFormData => ({
           ...prevFormData,
-          images: [
-            ...prevFormData.images,
-            {id: imageNumber, file: uriSource, base64: base64Source},
-          ],
+          images: [...prevFormData.images, {id: imageNumber, file: imageData}],
         }));
       }
     });
+  };
+  const convertToBase64 = async uri => {
+    try {
+      const base64String = await readFile(uri, 'base64');
+      return base64String;
+    } catch (error) {
+      console.error('Error converting image to Base64:', error);
+      return null;
+    }
   };
   useEffect(() => {
     axiosClient.get(`/village`).then(response => {
       setVillages(response.data);
     });
   }, []);
-
   // let locations = [...villages];
   // const filterVillages = useCallback(
   //   inputValue => {
@@ -397,7 +387,6 @@ export default function AddRentalScreen() {
       console.warn(err);
     }
   };
-
   const requestStoragePermission = async () => {
     try {
       const granted = await PermissionsAndroid.request(
@@ -419,7 +408,6 @@ export default function AddRentalScreen() {
       console.warn(err);
     }
   };
-
   return (
     <View style={styles.container}>
       <BackHeader navigation={navigation} title={`Add Rental`} />

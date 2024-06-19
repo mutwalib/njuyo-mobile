@@ -62,29 +62,19 @@ const upload = (file, onUploadProgress) => {
 };
 export const createRental = async rentalData => {
   try {
-    // const base64Images = rentalData.files.map(image => image.base64);
-    // const data = JSON.stringify({
-    //   property: JSON.stringify(rentalData.property),
-    //   files: rentalData.files,
-    // });
-    const formData = new FormData();
-    formData.append('property', JSON.stringify(rentalData.property));
     const files = rentalData.files;
-    for (let i = 0; i < files.length; i++) {
-      formData.append('files', {
-        uri: files[i],
-        type: 'image/jpeg',
-        filename: `${i + 1}.jpg`,
-      });
-    }
-    // formData.append('Content-Type', 'image/jpg');
-    console.log('formData', formData);
+    const data = {
+      property: JSON.stringify(rentalData.property),
+      base64Images: files.map(file => file.base64),
+    };
     const response = axios.post(
-      bURL + '/api/property/create/rental',
-      formData,
+      bURL + '/api/property/create/rental/with-encoded-images',
+      data,
       {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          Accept: 'application/json',
+          // 'Content-Type': 'multipart/form-data',
+          'Content-type': 'application/json',
           'Api-Key': '	4RPJln2MkX0_2UAEmMhN7sAfQkFDCzfpK91hAu3LM5I', //remote
         },
       },

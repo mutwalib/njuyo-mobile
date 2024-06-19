@@ -1,5 +1,6 @@
 import axios from 'axios';
 export const bURL = 'http://3.142.70.72'; //remote
+// export const bURL = 'http://localhost:8082'; //local
 // export const SOCKET_URL = 'ws://admin.njuyo.com/websocket'; //remote
 export const axiosClient = axios.create({
   baseURL: bURL + '/api',

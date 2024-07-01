@@ -36,6 +36,7 @@ export const registerUser = async data => {
         phone: data.phone,
         email: data.email,
         password: data.password,
+        isMobileAccess: data.isMobileAccess,
       }),
       {
         headers: {

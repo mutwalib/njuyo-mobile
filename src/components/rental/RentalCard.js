@@ -213,10 +213,12 @@ const RentalCard = ({rental}) => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
-    maxWidth: 290,
+    width: 190,
+    maxWidth:'100%',
     margin: 3,
     borderRadius: 8,
     padding: 5,
+    overflow:"hidden"
   },
   image: {
     height: 150,

@@ -67,17 +67,9 @@ export const createRental = async rentalData => {
       property: JSON.stringify(rentalData.property),
       base64Images: files.map(file => file.base64),
     };
-    const response = axios.post(
-      bURL + '/api/property/create/rental/with-encoded-images',
+    const response = axiosClient.post(
+      '/property/create/rental/with-encoded-images',
       data,
-      {
-        headers: {
-          Accept: 'application/json',
-          // 'Content-Type': 'multipart/form-data',
-          'Content-type': 'application/json',
-          'Api-Key': '	4RPJln2MkX0_2UAEmMhN7sAfQkFDCzfpK91hAu3LM5I', //remote
-        },
-      },
     );
     return await response;
   } catch (error) {

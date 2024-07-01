@@ -26,5 +26,8 @@ const COLORS = {
   success: '#4cc9f0',
   black: '#000000',
   activeIndicator: '#AF9A7D',
+  white: '#FFFFFF',
+  gray2: '#A9A9A9',
+  secondaryGray: 'rgba(84, 76, 76, 0.14)',
 };
 export default COLORS;

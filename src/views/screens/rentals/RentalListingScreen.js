@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { SearchBar, Slider } from 'react-native-elements';
+import React, {useState, useEffect} from 'react';
+import {View, Text, StyleSheet, FlatList, TouchableOpacity} from 'react-native';
+import {SearchBar, Slider} from 'react-native-elements';
 import Header from '../../../Navigation/Header';
 import RentalCard from '../../../components/rental/RentalCard';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchPagedRentals } from '../../../store/pagedRentalsSlice';
+import {useDispatch, useSelector} from 'react-redux';
+import {fetchPagedRentals} from '../../../store/pagedRentalsSlice';
 
 const RentalListingScreen = () => {
   const [filteredRentals, setFilteredRentals] = useState([]);
@@ -13,21 +13,24 @@ const RentalListingScreen = () => {
   const [searchText, setSearchText] = useState('');
   const [filterVisible, setFilterVisible] = useState(false);
   const dispatch = useDispatch();
-  const { rentalsList, loading, error, currentPage, totalPages } = useSelector(
+  const {rentalsList, loading, error, currentPage, totalPages} = useSelector(
     state => state.rentals,
   );
 
   useEffect(() => {
-    dispatch(fetchPagedRentals({ page: 0, size: 10 }));
+    dispatch(fetchPagedRentals({page: 0, size: 10}));
   }, [dispatch]);
 
   useEffect(() => {
     if (rentalsList) {
       const filtered = rentalsList.filter(
         property =>
-          property.pricePerMonth >= minPrice &&
-          property.pricePerMonth <= maxPrice &&
-          property.addressName.toLowerCase().includes(searchText.toLowerCase()),
+          (property.pricePerMonth >= minPrice &&
+            property.pricePerMonth <= maxPrice &&
+            property.addressName
+              .toLowerCase()
+              .includes(searchText.toLowerCase())) ||
+          property.title.toLowerCase().includes(searchText.toLowerCase()),
       );
       setFilteredRentals(filtered);
     }
@@ -35,7 +38,7 @@ const RentalListingScreen = () => {
 
   const loadMoreRentals = () => {
     if (currentPage < totalPages - 1) {
-      dispatch(fetchPagedRentals({ page: currentPage + 1, size: 10 }));
+      dispatch(fetchPagedRentals({page: currentPage + 1, size: 10}));
     }
   };
 
@@ -63,8 +66,7 @@ const RentalListingScreen = () => {
       />
       <TouchableOpacity
         style={styles.filterToggle}
-        onPress={() => setFilterVisible(!filterVisible)}
-      >
+        onPress={() => setFilterVisible(!filterVisible)}>
         <Text style={styles.filterToggleText}>
           {filterVisible ? 'Hide Filters' : 'Show Filters'}
         </Text>
@@ -98,13 +100,13 @@ const RentalListingScreen = () => {
         // ListHeaderComponent={renderHeader}
         data={filteredRentals}
         numColumns={2}
-        renderItem={({ item }) => <RentalCard rental={item} />}
+        renderItem={({item}) => <RentalCard rental={item} />}
         keyExtractor={item => item.id.toString()}
         ListEmptyComponent={
           loading ? (
             renderSkeleton()
           ) : (
-            <View style={{ alignContent: 'center', alignItems: 'center' }}>
+            <View style={{alignContent: 'center', alignItems: 'center'}}>
               <Text>No rentals match this search criteria.</Text>
             </View>
           )

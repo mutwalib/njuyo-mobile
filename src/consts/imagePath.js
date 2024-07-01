@@ -4,6 +4,8 @@ const icProfile = require('../assets/images/person.png');
 const icExplore = require('../assets/images/explore.png');
 const bannerImg = require('../assets/images/4.jpeg');
 const logoLabelled = require('../assets/logo-labelled.png');
+const checkedSuccess = require('../assets/check.png');
+
 const cover = require('../assets/images/cover.jpg')
 export default {
   avatar,
@@ -12,5 +14,6 @@ export default {
   icExplore,
   bannerImg,
   logoLabelled, 
-  cover
+  cover,
+  checkedSuccess
 };

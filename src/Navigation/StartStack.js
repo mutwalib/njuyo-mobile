@@ -8,9 +8,14 @@ import DrawerRoutes from './DrawerRoutes';
 import ExitScreen from '../views/screens/ExitScreen';
 import LoginScreen from '../views/screens/auth/LoginScreen';
 import Background from '../components/Background';
+import {LogLevel, OneSignal} from 'react-native-onesignal';
+import '../config/firebaseConfig';
+
 const Stack = createStackNavigator();
 const StartStack = () => {
   const [isFirstLaunch, setIsFirstLaunch] = useState(null);
+  OneSignal.Debug.setLogLevel(LogLevel.Verbose);
+  OneSignal.initialize('64bab68b-0cc0-4f50-96da-635b2728d5fc');
   useEffect(() => {
     AsyncStorage.getItem('alreadyLaunched')
       .then(value => {

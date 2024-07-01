@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "800028350716",
+    "project_id": "njuyo-401118",
+    "storage_bucket": "njuyo-401118.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:800028350716:android:bad85f0a9a6c4790b39f79",
+        "android_client_info": {
+          "package_name": "com.njuyomobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "800028350716-7sfl10m9r23vg1qthahdul1ahqqg6nhg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpkkB2myTdoktaotJQNOkGuesTuQbi5Do"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "800028350716-7sfl10m9r23vg1qthahdul1ahqqg6nhg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

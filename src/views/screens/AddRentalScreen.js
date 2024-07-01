@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {
   View,
   ScrollView,
@@ -22,12 +22,13 @@ import COLORS from '../../consts/colors';
 import {useNavigation} from '@react-navigation/native';
 import SelectDropdown from 'react-native-select-dropdown';
 import axiosClient from '../../services/api/api';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import NetInfo from '@react-native-community/netinfo';
 import Spinner from 'react-native-loading-spinner-overlay';
-import {Image as CompressorImage} from 'react-native-compressor';
 import {readFile} from 'react-native-fs';
-
+import BottomSheet from '../../components/BottomSheet';
+import imagePath from '../../consts/imagePath';
+import {fetchMyRentals} from '../../store/myRentalsSlice';
 export default function AddRentalScreen() {
   const navigation = useNavigation();
   const owner = useSelector(state => state.user.user);
@@ -73,6 +74,8 @@ export default function AddRentalScreen() {
     latitude: 0.0,
     longitude: 0.0,
   });
+  const bottomSheetRef = useRef();
+  const dispatch = useDispatch();
   const toggleModal = () => {
     setIsModalVisible(!isModalVisible);
   };
@@ -230,8 +233,14 @@ export default function AddRentalScreen() {
     console.log('resp', resp);
     if (resp?.status === 202) {
       setLoading(false);
-      Alert.alert('Form submited!');
-      navigation.goBack();
+      // Alert.alert('Form submited!');
+      // navigation.goBack();
+      dispatch(fetchMyRentals(owner.id));
+      bottomSheetRef.current.open();
+      // setTimeout(() => {
+      //   bottomSheetRef.current.close();
+      //   navigation.goBack();
+      // }, 3000);
     } else if (resp?.status === 400) {
       setLoading(false);
       Alert.alert('Bad Request!');
@@ -317,7 +326,6 @@ export default function AddRentalScreen() {
       } else if (response.errorCode) {
         console.log('ImagePicker Error: ', response.errorMessage);
       } else {
-        console.log('response.assets?.[0].base64', response.assets?.[0].base64);
         const fileExtension = response.assets?.[0].fileName.split('.').pop();
         const imageData = {
           uri: response.assets?.[0].uri,
@@ -829,6 +837,15 @@ export default function AddRentalScreen() {
           titleStyle={step < 2 ? styles.buttonTitle : null}
         />
       </View>
+      <BottomSheet bottomSheetRef={bottomSheetRef}>
+        <View style={styles.sheetContent}>
+          <Image
+            source={imagePath.checkedSuccess}
+            style={styles.checkedImage}
+          />
+          <Text style={styles.successText}>Form submitted successfully!</Text>
+        </View>
+      </BottomSheet>
     </View>
   );
 }
@@ -866,11 +883,6 @@ const styles = StyleSheet.create({
   },
 
   formContainer: {
-    // width: '100%',
-    // justifyContent: 'center',
-    // alignItems: 'center',
-    // padding: 20,
-
     backgroundColor: COLORS.white,
     padding: 20,
     borderRadius: 10,
@@ -997,5 +1009,21 @@ const styles = StyleSheet.create({
   },
   spinnerTextStyle: {
     color: '#FFF',
+  },
+  sheetContent: {
+    marginTop:100,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkedImage: {
+    width: 100,
+    height: 100,
+  },
+  successText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    textAlign: 'center',
   },
 });

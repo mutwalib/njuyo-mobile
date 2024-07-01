@@ -1,31 +1,41 @@
 import React, {useEffect, useState} from 'react';
 import {Text, TouchableOpacity, View, FlatList, StyleSheet} from 'react-native';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {getMyRentals, getRentalById} from '../../../services/RentalService';
 import {useNavigation} from '@react-navigation/native';
 import MyRentalCard from './MyRentalCard';
+import {fetchMyRentals} from '../../../store/myRentalsSlice';
 
 const RentalScene = () => {
   const user = useSelector(state => state.user.user);
+  const myRentals = useSelector(state => state.myRentals.myRentals);
+  const rentalsStatus = useSelector(state => state.myRentals.status);
   const navigation = useNavigation();
-  const [rentals, setRentals] = useState([]);
+
+  // const [rentals, setRentals] = useState([]);
+  const dispatch = useDispatch();
   const handleRentalClick = async rentalId => {
     const response = await getRentalById(rentalId);
     navigation.navigate('rental_details', response.data);
   };
+  // useEffect(() => {
+  //   const fetchRentals = async () => {
+  //     try {
+  //       const response = await getMyRentals(user.id);
+  //       if (response.status === 200) {
+  //         setRentals(response.data);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching rentals:', error);
+  //     }
+  //   };
+  //   fetchRentals();
+  // }, [user]);
   useEffect(() => {
-    const fetchRentals = async () => {
-      try {
-        const response = await getMyRentals(user.id);
-        if (response.status === 200) {
-          setRentals(response.data);
-        }
-      } catch (error) {
-        console.error('Error fetching rentals:', error);
-      }
-    };
-    fetchRentals();
-  }, [user]);
+    if (rentalsStatus === 'idle') {
+      dispatch(fetchMyRentals(user.id));
+    }
+  }, [rentalsStatus, dispatch, user.id]);
   return (
     <View style={styles.container}>
       <TouchableOpacity
@@ -33,9 +43,9 @@ const RentalScene = () => {
         onPress={() => navigation.navigate('add_rental')}>
         <Text style={styles.buttonText}>Add New Rental</Text>
       </TouchableOpacity>
-      {rentals && (
+      {myRentals && (
         <FlatList
-          data={rentals}
+          data={myRentals}
           renderItem={({item}) => (
             <MyRentalCard
               item={item}

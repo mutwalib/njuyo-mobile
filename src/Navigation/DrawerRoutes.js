@@ -103,7 +103,7 @@ const DrawerRoutes = () => {
               </View>
               <TouchableOpacity
                 style={{marginBottom: 20, marginLeft: 30}}
-                onPress={() => Linking.openURL('https://njuyo.com/privacy')}>
+                onPress={() => Linking.openURL('https://njuyo.com/privacy-policy')}>
                 <Text>Privacy Policy</Text>
               </TouchableOpacity>
             </View>

@@ -33,7 +33,7 @@ const nearestRentalSlice = createSlice({
       })
       .addCase(getRentalsNearYou.fulfilled, (state, action) => {
         state.loading = false;
-        state.nearestRentals = action.payload.content;
+        state.nearestRentals = action.payload.content.sort((a, b) => a.distance - b.distance);
       })
       .addCase(getRentalsNearYou.rejected, (state, action) => {
         state.loading = false;

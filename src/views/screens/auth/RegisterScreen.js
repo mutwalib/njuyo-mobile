@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   Alert,
   ToastAndroid,
+  ActivityIndicator,
+  Keyboard,
 } from 'react-native';
 import {Text} from 'react-native-paper';
 import auth from '@react-native-firebase/auth';
@@ -24,21 +26,27 @@ import {lastNameValidator} from '../../helpers/lastNameValidator';
 import {phoneValidator} from '../../helpers/phoneValidator';
 import {otpValidator} from '../../helpers/otpValidator';
 import OtpInputs from 'react-native-otp-inputs';
+import COLORS from '../../../consts/colors';
 
 export default function RegisterScreen({navigation}) {
   const [step, setStep] = useState(1); // Track current step of registration
   const [firstName, setFirstName] = useState({value: '', error: ''});
   const [lastName, setLastName] = useState({value: '', error: ''});
   const [email, setEmail] = useState({value: '', error: ''});
-  const [phone, setPhone] = useState({value: '+256', error: ''});
+  const [phone, setPhone] = useState({
+    value: '+256',
+    label: 'Uganda UG (+256)',
+    error: '',
+  });
+  const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState({value: '', error: ''});
   const [otp, setOtp] = useState({value: '', error: ''});
   const [verificationId, setVerificationId] = useState(null);
   const [countries, setCountries] = useState([]);
-  const [selectedCountry, setSelectedCountry] = useState({
-    name: 'Uganda',
-    phoneCode: '+256',
-  });
+  // const [selectedCountry, setSelectedCountry] = useState({
+  //   name: 'Uganda',
+  //   phoneCode: '+256',
+  // });
 
   useEffect(() => {
     fetch('https://restcountries.com/v2/all')
@@ -80,10 +88,13 @@ export default function RegisterScreen({navigation}) {
         }
         // Send OTP using Firebase
         try {
+          Keyboard.dismiss();
+          setLoading(true);
           const confirmation = await auth().signInWithPhoneNumber(phone.value);
           console.log('confirmation', confirmation);
           setVerificationId(confirmation.verificationId);
           // Alert.alert('OTP sent to your phone');
+          setLoading(false);
           ToastAndroid.show('OTP sent to your phone', ToastAndroid.SHORT);
           setStep(3);
         } catch (error) {
@@ -97,6 +108,7 @@ export default function RegisterScreen({navigation}) {
           return;
         }
         try {
+          Keyboard.dismiss();
           const credential = auth.PhoneAuthProvider.credential(
             verificationId,
             otp.value,
@@ -116,6 +128,7 @@ export default function RegisterScreen({navigation}) {
           setPassword({...password, error: passwordError});
           return;
         }
+        Keyboard.dismiss();
         await submitForm();
         // Register user here
         navigation.reset({index: 0, routes: [{name: navigationStrings.AUTH}]});
@@ -199,6 +212,11 @@ export default function RegisterScreen({navigation}) {
             autoCompleteType="tel"
             keyboardType="phone-pad"
           />
+          {loading && (
+            <View style={styles.loader}>
+              <ActivityIndicator size="large" color={COLORS.dark} />
+            </View>
+          )}
         </>
       )}
       {step === 3 && (
@@ -261,15 +279,15 @@ export default function RegisterScreen({navigation}) {
         </Button>
       </View>
 
-      {step !== 1 && (
-        <View style={styles.row}>
-          <Text>Already have an account? </Text>
-          <TouchableOpacity
-            onPress={() => navigation.replace(navigationStrings.SIGNIN)}>
-            <Text style={styles.link}>Login</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* {step !== 1 && ( */}
+      <View style={styles.row}>
+        <Text>Already have an account? </Text>
+        <TouchableOpacity
+          onPress={() => navigation.replace(navigationStrings.SIGNIN)}>
+          <Text style={styles.link}>Login</Text>
+        </TouchableOpacity>
+      </View>
+      {/* )} */}
     </Background>
   );
 }
@@ -337,5 +355,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.error,
     marginTop: 4,
+  },
+  loader: {
+    height: 300,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

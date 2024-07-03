@@ -7,6 +7,7 @@ import {
   Image,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import Stamp from '../Stamp';
@@ -15,15 +16,11 @@ import CustomButton from '../CustomButton';
 import Icon from '../../consts/Icon';
 import {useNavigation} from '@react-navigation/native';
 import Geolocation from '@react-native-community/geolocation';
-import axios from 'axios';
-import {
-  fetchAndCacheImage,
-  fetchImageUrl,
-  rentalPicUrls,
-  rentalPictures,
-} from '../../services/PictureService';
+import {fetchAndCacheImage} from '../../services/PictureService';
 import {bookRental, checkBooked} from '../../services/RentalService';
 import {getRentalsNearYou} from '../../store/nearestRentalSlice';
+import COLORS from '../../consts/colors';
+import { fetchPagedRentals } from '../../store/pagedRentalsSlice';
 
 const defaultImage = require('../../assets/default_house-img.png');
 
@@ -48,6 +45,7 @@ const RentalCard = ({rental}) => {
   const [isBooked, setIsBooked] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isBookButtonDisabled, setIsBookButtonDisabled] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -56,6 +54,7 @@ const RentalCard = ({rental}) => {
         const resp = await fetchAndCacheImage(pics[0].picUrl);
         setDisplayImage({uri: resp});
       }
+      setLoading(false);
     };
     fetchImages();
     checkBookingStatus();
@@ -107,6 +106,7 @@ const RentalCard = ({rental}) => {
       if (response?.status === 200) {
         setIsBooked(true);
         getCurrentLocation();
+        dispatch(fetchPagedRentals(0, 10))
         Alert.alert('Booking Successful', response.data, [{text: 'OK'}], {
           cancelable: false,
         });
@@ -138,7 +138,13 @@ const RentalCard = ({rental}) => {
   return (
     <ScrollView contentContainerStyle={styles.card}>
       <TouchableOpacity onPress={handleViewRental}>
-        <Image source={displayImage} style={styles.image} />
+        {loading ? (
+          <View style={styles.loader}>
+            <ActivityIndicator size="large" color={COLORS.dark} />
+          </View>
+        ) : (
+          <Image source={displayImage} style={styles.image} />
+        )}
         <View style={styles.badgeContainer}>
           <Text style={styles.badge}>For rent</Text>
         </View>
@@ -214,11 +220,11 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
     width: 190,
-    maxWidth:'100%',
+    maxWidth: '100%',
     margin: 3,
     borderRadius: 8,
     padding: 5,
-    overflow:"hidden"
+    overflow: 'hidden',
   },
   image: {
     height: 150,
@@ -300,6 +306,11 @@ const styles = StyleSheet.create({
   },
   iconText: {
     marginLeft: 4,
+  },
+  loader: {
+    height: 150,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

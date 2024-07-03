@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from 'react';
+import {useSelector, useDispatch} from 'react-redux';
 import {
   View,
   ScrollView,
@@ -17,9 +18,17 @@ import {
   cancelAppointment,
   getSchedule,
   ownerConfirmInspection,
-  receiveBooking,
-  scheduleAppointment,
+  receiveBooking as receiveBookingService,
+  scheduleAppointment as scheduleAppointmentService,
 } from '../../services/RentalService';
+import {
+  handleReceiveBookingAction,
+  handleApproveInspectionAction,
+  handleRentOutPropertyAction,
+  handleScheduleAppointmentAction,
+  handleCancelAppointmentAction,
+} from '../../store/myBookingsSlice';
+import SelectDropdown from 'react-native-select-dropdown';
 
 const BookingDetailsScreen = ({navigation, route}) => {
   const {selectedBooking, rentalId, user, isRented} = route.params;
@@ -31,18 +40,19 @@ const BookingDetailsScreen = ({navigation, route}) => {
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogMessage, setDialogMessage] = useState('');
-  console.log('selectedBooking', selectedBooking);
+
+  const dispatch = useDispatch();
+
   useEffect(() => {
     const handleReceiveBooking = async () => {
-      const response = await receiveBooking(selectedBooking.bookId);
+      const response = await receiveBookingService(selectedBooking.bookId);
       if (response.status === 202) {
-        if (selectedBooking.status.toLowerCase() === 'booked') {
-          selectedBooking.status = 'RECEIVED';
-        }
+        console.log('selectedBooking.bookId', selectedBooking.bookId);
+        dispatch(handleReceiveBookingAction(selectedBooking.bookId));
       }
     };
     handleReceiveBooking();
-  }, [selectedBooking]);
+  }, [selectedBooking, dispatch]);
 
   const showDialog = (title, message) => {
     setDialogTitle(title);
@@ -79,6 +89,7 @@ const BookingDetailsScreen = ({navigation, route}) => {
   const handleApproveInspection = async booking => {
     const result = await ownerConfirmInspection(booking);
     if (result.status === 200) {
+      dispatch(handleApproveInspectionAction(booking));
       showDialog('Info', result.data);
     } else {
       showDialog('Error', 'Not Approved: ' + result.response.data);
@@ -91,6 +102,7 @@ const BookingDetailsScreen = ({navigation, route}) => {
       rentalId: booking.rentalId,
     });
     if (result.status === 200) {
+      dispatch(handleRentOutPropertyAction(booking));
       showDialog('Success', result.data);
     } else {
       showDialog('Error', result.data);
@@ -98,6 +110,7 @@ const BookingDetailsScreen = ({navigation, route}) => {
   };
 
   const handleScheduleAppointment = async selectedBooking => {
+    console.log('selected booking', selectedBooking);
     if (!selectedDate) {
       showDialog('Error', 'Date is Required!');
       return;
@@ -118,8 +131,9 @@ const BookingDetailsScreen = ({navigation, route}) => {
       fulfilled: false,
       rescheduleCount: 0,
     };
-    const response = await scheduleAppointment(request);
+    const response = await scheduleAppointmentService(request);
     if (response?.status === 202) {
+      dispatch(handleScheduleAppointmentAction(request));
       showDialog('Success', response.data);
     } else {
       showDialog('Error', response.data);
@@ -131,6 +145,7 @@ const BookingDetailsScreen = ({navigation, route}) => {
       const response = await getSchedule(selectedBooking);
       const schedule = response?.data;
       if (schedule) {
+        dispatch(handleCancelAppointmentAction(selectedBooking.bookId));
         return cancelAppointment(schedule.bookingScheduled.id);
       }
     }
@@ -141,9 +156,14 @@ const BookingDetailsScreen = ({navigation, route}) => {
       if (selectedBooking.status === 'SCHEDULED') {
         const result = await getSchedule(selectedBooking);
         const schedule = result?.data;
-        console.log('schedule-----', schedule);
         if (schedule) {
-          cancelAppointment(schedule.bookingScheduled.id);
+          console.log(
+            'schedule.bookingScheduled.id',
+            schedule.bookingScheduled.id,
+          );
+          const bookId = schedule.bookingScheduled.id;
+          const cancelled = await cancelAppointment(bookId);
+          console.log('cancelled', cancelled);
         }
 
         if (!selectedDate) {
@@ -167,9 +187,9 @@ const BookingDetailsScreen = ({navigation, route}) => {
           fulfilled: false,
           rescheduleCount: 1,
         };
-        console.log('request-----', request);
-        const response = await scheduleAppointment(request);
+        const response = await scheduleAppointmentService(request);
         if (response?.status === 200) {
+          dispatch(handleScheduleAppointmentAction(request));
           showDialog(
             'Success',
             response.data + `Rescheduled for ${selectedDate} ${selectedTime}`,
@@ -181,6 +201,7 @@ const BookingDetailsScreen = ({navigation, route}) => {
       }
     }
   };
+
   const CustomDialog = ({isVisible, title, message, onClose}) => {
     return (
       <Modal
@@ -200,6 +221,7 @@ const BookingDetailsScreen = ({navigation, route}) => {
       </Modal>
     );
   };
+
   return (
     <View style={styles.container}>
       <View>

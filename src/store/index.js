@@ -4,6 +4,9 @@ import userReducer from './userSlice';
 import nearestRentalReducer from './nearestRentalSlice';
 import pagedRentalsReducer from './pagedRentalsSlice';
 import myRentalsReducer from './myRentalsSlice';
+import inquiryReducer from './inquirySlice';
+import myBookingsReducer from './myBookingsSlice';
+import bookingsOnRentalReducer from './bookingsOnRental';
 const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -11,6 +14,9 @@ const store = configureStore({
     nearestRentals: nearestRentalReducer,
     rentals: pagedRentalsReducer,
     myRentals: myRentalsReducer,
+    inquiry: inquiryReducer,
+    bookings: myBookingsReducer,
+    bookingOnRental:bookingsOnRentalReducer
   },
 });
 

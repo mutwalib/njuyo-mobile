@@ -7,11 +7,16 @@ import {
   StyleSheet,
 } from 'react-native';
 import imagePath from '../consts/imagePath';
-
+import { toggleInquiryOpen } from '../store/inquirySlice';
+import { useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 const HeroBanner = () => {
-  const [isInquiryOpen, setIsInquiryOpen] = useState(false);
+
+  const isInquiryOpen = useSelector((state) => state.inquiry.isInquiryOpen);
+  const dispatch = useDispatch();
+
   const handleInquiryOpenBtn = () => {
-    setIsInquiryOpen(true);
+    dispatch(toggleInquiryOpen());
   };
   return (
     <ImageBackground

@@ -25,6 +25,7 @@ import {getStatusTextColor, formatDate, formatTime} from '../../utils/Helper';
 import {Toast} from 'react-native-toast-message';
 import BackHeader from '../../Navigation/BackHeader';
 import Icon from '../../consts/Icon';
+import navigationStrings from '../../consts/navigationStrings';
 
 const RentalBookings = ({navigation, route}) => {
   const {bookings, rental} = route.params;
@@ -84,9 +85,10 @@ const RentalBookings = ({navigation, route}) => {
 
     const fetchUser = async () => {
       const isOwner = user?.roles.includes('OWNER');
-      if (user === null && !isOwner) {
-        navigation.navigate('Login');
-        return;
+      if (user === null) {
+        navigation.navigate(navigationStrings.SIGNIN);
+      } else if (!isOwner) {
+        navigation.navigate('profile');
       }
     };
     if (navigation.isFocused()) {
@@ -102,7 +104,6 @@ const RentalBookings = ({navigation, route}) => {
       setSelectedDate(scheduleDate);
       setSelectedTime(scheduleTime);
     }
-    // setIsModalOpen(true);
     navigation.navigate('BookingDetailsScreen', {
       selectedBooking: booking,
       rentalId,
@@ -141,7 +142,11 @@ const RentalBookings = ({navigation, route}) => {
                       styles.bookingStatus,
                       {color: getStatusTextColor(booking.status.toLowerCase())},
                     ]}>
-                    {booking.status}
+                    {booking.status === 'RENTED'
+                      ? booking.customerId === booking.rentedBy
+                        ? 'Assigned'
+                        : 'Taken'
+                      : booking.status}
                   </Text>
                 </View>
                 <Text style={styles.bookingCustomer}>

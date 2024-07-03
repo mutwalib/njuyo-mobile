@@ -30,6 +30,7 @@
     "date-fns": "^3.6.0",
     "form-data": "^2.3.3",
     "jsonwebtoken": "^9.0.2",
+    "moment": "^2.30.1",
     "pinar": "^0.12.2",
     "react": "17.0.0",
     "react-native": "0.68.0",

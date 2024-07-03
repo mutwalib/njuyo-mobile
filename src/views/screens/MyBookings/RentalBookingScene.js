@@ -1,33 +1,22 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect} from 'react';
 import {
-  Text,
-  TouchableOpacity,
   View,
   FlatList,
   StyleSheet,
-  Alert,
 } from 'react-native';
-import {useSelector} from 'react-redux';
-import {getMyBookings} from '../../../services/RentalService';
+import {useDispatch, useSelector} from 'react-redux';
 import BookingCard from '../../../components/booking/BookingCard';
+import { fetchBookings } from '../../../store/myBookingsSlice';
 const RentalBookingScene = () => {
   const user = useSelector(state => state.user.user);
-  const [bookings, setBookings] = useState([]);
+  const bookings = useSelector(state => state.bookings.bookings);
+  const bookingsStatus = useSelector(state => state.bookings.status);
+  const dispatch = useDispatch();
   useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        const response = await getMyBookings(user.id);
-        console.log('bookings', response?.data);
-        if (response.status === 200) {
-          setBookings(response.data);
-        }
-      } catch (error) {
-        console.error('Error fetching rentals:', error);
-      }
-    };
-    fetchBookings();
-  }, [user]);
-
+    if (bookingsStatus === 'idle') {
+      dispatch(fetchBookings(user.id));
+    }
+  }, [bookingsStatus, dispatch, user.id]);
   const renderBookingCard = ({item}) => (
     <BookingCard booking={item}/>
   );

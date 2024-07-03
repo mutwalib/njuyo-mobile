@@ -5,7 +5,9 @@ export const fetchMyRentals = createAsyncThunk(
   'rentals/fetchMyRentals',
   async userId => {
     const response = await getMyRentals(userId);
-    return response.data;
+    return response.data.sort(
+      (a, b) => new Date(b.registeredOn) - new Date(a.registeredOn),
+    );
   },
 );
 

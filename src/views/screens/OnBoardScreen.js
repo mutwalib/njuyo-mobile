@@ -19,7 +19,7 @@ const OnBoardScreen = () => {
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: COLORS.white}}>
       <StatusBar translucent backgroundColor={COLORS.transparent} />
-      <Image source={require('../../assets/house2.png')} style={style.image} />
+      <Image source={require('../../assets/house1.jpg')} style={style.image} />
       <View style={style.indicatorContainer}>
         <View style={style.indicator} />
         <View style={style.indicator} />

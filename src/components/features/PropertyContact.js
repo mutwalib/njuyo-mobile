@@ -1,15 +1,18 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, Alert, StyleSheet, TouchableOpacity} from 'react-native';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {
   bookRental,
   deleteRental,
   checkBooked,
   cancelBooking,
   getBooking,
+  getRentalsNearYou,
 } from '../../services/RentalService';
 import {useNavigation} from '@react-navigation/native';
+import Geolocation from '@react-native-community/geolocation';
 import Toast from 'react-native-toast-message';
+import {fetchPagedRentals} from '../../store/pagedRentalsSlice';
 const PropertyContact = ({owner, agentId, rentalId}) => {
   const [isBookButtonDisabled, setIsBookButtonDisabled] = useState(false);
   const [isDeleteButtonDisabled, setIsDeleteButtonDisabled] = useState(false);
@@ -18,7 +21,7 @@ const PropertyContact = ({owner, agentId, rentalId}) => {
   const [isUnCancellable, setIsUnCancellable] = useState(false);
   const navigation = useNavigation();
   const user = useSelector(state => state.user.user);
-
+  const dispatch = useDispatch();
   useEffect(() => {
     checkBookingStatus();
   }, []);
@@ -64,6 +67,8 @@ const PropertyContact = ({owner, agentId, rentalId}) => {
         const response = await cancelBooking(data);
         if (response?.status === 202) {
           setIsBooked(false);
+          getCurrentLocation();
+          dispatch(fetchPagedRentals(0, 10));
           Alert.alert(
             'Cancelled',
             'Booking for this property ' + response.data,
@@ -139,6 +144,20 @@ const PropertyContact = ({owner, agentId, rentalId}) => {
     } finally {
       setIsDeleteButtonDisabled(false);
     }
+  };
+  const getCurrentLocation = () => {
+    Geolocation.getCurrentPosition(
+      position => {
+        const {latitude, longitude} = position.coords;
+        const googleLocation = `${latitude},${longitude}`;
+        console.log(googleLocation, 'location');
+        dispatch(getRentalsNearYou(googleLocation));
+      },
+      error => {
+        console.log(error.message);
+      },
+      {enableHighAccuracy: false, timeout: 40000, maximumAge: 10000},
+    );
   };
   return (
     <View style={styles.container}>

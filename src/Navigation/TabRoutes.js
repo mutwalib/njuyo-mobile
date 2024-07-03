@@ -2,11 +2,13 @@ import React from 'react';
 import {getFocusedRouteNameFromRoute} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import navigationStrings from '../consts/navigationStrings';
-import HomeStack from './HomeStack';
-import RentalStack from './RentalStack';
+// import HomeStack from './HomeStack';
+// import RentalStack from './RentalStack';
 import {Image} from 'react-native';
 import COLORS from '../consts/colors';
 import icons from '../consts/icons';
+import HomeScreen from '../views/screens/home/HomeScreen';
+import RentalListingScreen from '../views/screens/rentals/RentalListingScreen';
 const Tab = createBottomTabNavigator();
 
 const TabRoutes = () => {
@@ -41,7 +43,7 @@ const TabRoutes = () => {
       )}>
       <Tab.Screen
         name={navigationStrings.INITIALBTMTAB}
-        component={HomeStack}
+        component={HomeScreen}
         options={{
           tabBarIcon: ({focused}) => {
             return (
@@ -60,7 +62,7 @@ const TabRoutes = () => {
       />
       <Tab.Screen
         name={navigationStrings.RENTALS}
-        component={RentalStack}
+        component={RentalListingScreen}
         options={{
           tabBarIcon: ({focused}) => {
             return (

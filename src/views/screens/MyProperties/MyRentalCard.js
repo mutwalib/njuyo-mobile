@@ -5,37 +5,22 @@ import {
   getRentalById,
 } from '../../../services/RentalService';
 import {useNavigation} from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchBookingsOnRental } from '../../../store/bookingsOnRental';
 
 const MyRentalCard = ({item}) => {
-  const [bookingsCount, setBookingsCount] = useState(0);
-  const [bookings, setBookings] = useState([]);
   const navigation = useNavigation();
-
+  const dispatch = useDispatch();
+  const bookings = useSelector(state => state.bookingOnRental.rentalBookings[item.id]) || [];
+  const bookingsCount = bookings.length;
   useEffect(() => {
-    fetchPropertyBookings();
-  }, []);
-
-  const fetchPropertyBookings = useCallback(async () => {
-    const response = await getBookingsOnRental(item.id);
-    if (response.status === 200) {
-      setBookingsCount(response.data.length);
-      setBookings(response.data);
-    }
-  }, [item.id]);
+    dispatch(fetchBookingsOnRental(item.id));
+  }, [dispatch, item.id]);
 
   const handleRentalClick = async rentalId => {
     const response = await getRentalById(rentalId);
-    navigation.navigate('rental-details', response.data);
+    navigation.navigate('rental_details', response.data);
   };
-  // const fetchRentalBookings = async () => {
-  //   if (rentalId) {
-  //     const response = await getBookingsOnRental(rentalId);
-  //     if (response.status === 200) {
-  //       console.log(response.data);
-  //       setBookings(response.data);
-  //     }
-  //   }
-  // };
 
   const handleShowBookings = () => {
     const rental = item;

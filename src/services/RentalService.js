@@ -1,4 +1,4 @@
-import axios, {Axios} from 'axios';
+import moment from 'moment';
 import axiosClient, {bURL} from './api/api';
 const getAllRentals = async () => {
   try {
@@ -154,7 +154,7 @@ export const scheduleAppointment = async appointmentData => {
       rentalId: appointmentData.rentalId,
       customerId: appointmentData.customerId,
       bookingId: appointmentData.bookingId,
-      scheduleDate: appointmentData.scheduleDate,
+      scheduleDate: moment(appointmentData.scheduleDate).format('DD/MM/YYYY'),
       scheduleTime: appointmentData.scheduleTime,
       fulfilled: appointmentData.fulfilled,
       rescheduleCount: appointmentData.rescheduleCount,
@@ -166,11 +166,19 @@ export const scheduleAppointment = async appointmentData => {
       return error;
     });
 };
-export const cancelAppointment = async ({bookingId}) => {
-  const response = await axiosClient.delete(
-    `/booking/rental/appointment/delete/${bookingId}`,
-  );
-  return response;
+export const cancelAppointment = async bookId => {
+  console.log('bookingId', bookId);
+  // const response = await axiosClient.delete(
+  //   `/booking/rental/appointment/delete/${bookId}`,
+  // );
+  return axiosClient
+    .delete(`/booking/rental/appointment/delete/${bookId}`)
+    .then(response => {
+      return response;
+    })
+    .catch(error => {
+      return error;
+    });
 };
 export const receiveBooking = async bookId => {
   try {
@@ -185,8 +193,9 @@ export const receiveBooking = async bookId => {
 export const getSchedule = async indivBooking => {
   try {
     console.log('indivBooking-----', indivBooking);
+    const bookId = indivBooking.bookId;
     const response = await axiosClient.post(
-      `/booking/rental/appointment/${indivBooking.bookId}`,
+      `/booking/rental/appointment/${bookId}`,
     );
     return response;
   } catch (error) {

@@ -14,15 +14,15 @@ import User from '../assets/profile.png';
 import navigationStrings from '../consts/navigationStrings';
 import LoginScreen from '../views/screens/auth/LoginScreen';
 import RegisterScreen from '../views/screens/auth/RegisterScreen';
-import AuthStack from './AuthStack';
-import ProfileStack from './ProfileStack';
+// import AuthStack from './AuthStack';
+// import ProfileStack from './ProfileStack';
 import MyProperties from '../views/screens/MyProperties/MyProperties';
 import MyBookings from '../views/screens/MyBookings/MyBookings';
 import MyProspects from '../views/screens/MyProspects/MyProspects';
-import Icons from '../consts/icons';
+// import Icons from '../consts/icons';
 import {logout} from '../store/authSlice';
 import {setUser} from '../store/userSlice';
-import PropertiesStack from './PropertiesStack';
+// import PropertiesStack from './PropertiesStack';
 
 const Drawer = createDrawerNavigator();
 
@@ -130,7 +130,7 @@ const DrawerRoutes = () => {
                 <Icon type="fa" name="user" size={size} color={color} />
               ),
             }}
-            component={ProfileStack}
+            component={ProfileScreen}
           />
           <Drawer.Screen
             name="My Bookings"
@@ -162,7 +162,7 @@ const DrawerRoutes = () => {
                     <Icon type="fa" name="building" size={size} color={color} />
                   ),
                 }}
-                component={PropertiesStack}
+                component={MyProperties}
               />
             </>
           )}
@@ -176,8 +176,8 @@ const DrawerRoutes = () => {
                 <Icon type="fa" name="sign-in" size={size} color={color} />
               ),
             }}
-            component={AuthStack}
-            name={navigationStrings.AUTH}
+            component={LoginScreen}
+            name="Login"
           />
           <Drawer.Screen
             options={{
@@ -187,7 +187,7 @@ const DrawerRoutes = () => {
               ),
             }}
             component={RegisterScreen}
-            name={navigationStrings.SIGNUP}
+            name="Register"
           />
         </>
       )}

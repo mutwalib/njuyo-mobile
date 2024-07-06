@@ -26,13 +26,22 @@ import {lastNameValidator} from '../../helpers/lastNameValidator';
 import {phoneValidator} from '../../helpers/phoneValidator';
 import {otpValidator} from '../../helpers/otpValidator';
 import OtpInputs from 'react-native-otp-inputs';
+import RNOtpVerify from 'react-native-otp-verify';
 import COLORS from '../../../consts/colors';
+import {
+  checkEmailPhoneExistence,
+  generateEmailOtp,
+  validateOtp,
+} from '../../../services/AuthServices';
 
 export default function RegisterScreen({navigation}) {
   const [step, setStep] = useState(1); // Track current step of registration
   const [firstName, setFirstName] = useState({value: '', error: ''});
   const [lastName, setLastName] = useState({value: '', error: ''});
-  const [email, setEmail] = useState({value: '', error: ''});
+  const [contact, setContact] = useState({value: '', error: ''});
+  const [contactType, setContactType] = useState(''); // To store whether it's an email or phone
+  const [resendCountdown, setResendCountdown] = useState(10);
+  const [canResend, setCanResend] = useState(false);
   const [phone, setPhone] = useState({
     value: '+256',
     label: 'Uganda UG (+256)',
@@ -43,11 +52,34 @@ export default function RegisterScreen({navigation}) {
   const [otp, setOtp] = useState({value: '', error: ''});
   const [verificationId, setVerificationId] = useState(null);
   const [countries, setCountries] = useState([]);
-  // const [selectedCountry, setSelectedCountry] = useState({
-  //   name: 'Uganda',
-  //   phoneCode: '+256',
-  // });
+  useEffect(() => {
+    RNOtpVerify.getOtp()
+      .then(p => RNOtpVerify.addListener(otpHandler))
+      .catch(p => console.log(p));
 
+    return () => RNOtpVerify.removeListener();
+  }, []);
+  const otpHandler = message => {
+    if (message) {
+      const otpMatch = /(\d{6})/g.exec(message);
+      if (otpMatch && otpMatch[1]) {
+        const otp = otpMatch[1];
+        setOtp({value: otp, error: ''});
+      } else {
+        setOtp({value: '', error: 'No OTP received'});
+      }
+    } else {
+      setOtp({value: '', error: 'Message not received yet'});
+    }
+  };
+  const checkEmailAlreadyThere = async email => {
+    const response = await checkEmailPhoneExistence(email);
+    return response;
+  };
+  const checkPhoneAlreadyThere = async phone => {
+    const response = await checkEmailPhoneExistence(phone);
+    return response;
+  };
   useEffect(() => {
     fetch('https://restcountries.com/v2/all')
       .then(response => response.json())
@@ -68,70 +100,183 @@ export default function RegisterScreen({navigation}) {
       .catch(error => console.error(error));
   }, []);
 
+  useEffect(() => {
+    const isEmail = contact.value.includes('@');
+    setContactType(isEmail ? 'email' : 'phone');
+  }, [contact.value]);
+
   const onNextStep = async () => {
     switch (step) {
-      case 1: // Validate and proceed to next step
-        const firstNameError = firstNameValidator(firstName.value);
-        const lastNameError = lastNameValidator(lastName.value);
-        if (firstNameError || lastNameError) {
-          setFirstName({...firstName, error: firstNameError});
-          setLastName({...lastName, error: lastNameError});
+      case 1: // Determine if contact is email or phone
+        const contactError =
+          contactType === 'email'
+            ? emailValidator(contact.value)
+            : phoneValidator(contact.value);
+        if (contactError) {
+          setContact({...contact, error: contactError});
           return;
+        }
+        Keyboard.dismiss();
+        setLoading(true);
+        if (contactType === 'email') {
+          const result = await checkEmailAlreadyThere(contact.value);
+          if (result.status === 200) {
+            setContact({...contact, error: result.data});
+            setLoading(false);
+            return;
+          }
+          const resp = await generateEmailOtp(contact.value);
+          console.log('resp', resp);
+          setTimeout(() => {
+            setLoading(false);
+            ToastAndroid.show(
+              'OTP sent to your email at ' + contact.value,
+              ToastAndroid.LONG,
+            );
+            setStep(2);
+            startResendCountdown();
+          }, 1000);
+        } else if (contactType === 'phone') {
+          const result = await checkPhoneAlreadyThere(contact.value);
+          if (result.status === 200) {
+            setContact({...contact, error: result.data});
+            setLoading(false);
+            return;
+          }
+          const confirmation = await auth().signInWithPhoneNumber(
+            contact.value,
+          );
+          setVerificationId(confirmation.verificationId);
+          setLoading(false);
+          ToastAndroid.show('OTP sent to your phone', ToastAndroid.LONG);
+          setStep(2);
+          startResendCountdown();
         }
         setStep(2);
         break;
-      case 2: // Validate and proceed to next step
-        const phoneError = phoneValidator(phone.value);
-        if (phoneError) {
-          setPhone({...phone, error: phoneError});
-          return;
-        }
-        // Send OTP using Firebase
-        try {
-          Keyboard.dismiss();
-          setLoading(true);
-          const confirmation = await auth().signInWithPhoneNumber(phone.value);
-          console.log('confirmation', confirmation);
-          setVerificationId(confirmation.verificationId);
-          // Alert.alert('OTP sent to your phone');
-          setLoading(false);
-          ToastAndroid.show('OTP sent to your phone', ToastAndroid.SHORT);
-          setStep(3);
-        } catch (error) {
-          Alert.alert(error.message);
-        }
-        break;
-      case 3: // Verify OTP
+      case 2: // Validate OTP
         const otpError = otpValidator(otp.value);
         if (otpError) {
           setOtp({...otp, error: otpError});
           return;
         }
+        if (!otp.value || otp.value.length !== 6) {
+          setOtp({...otp, error: 'Please enter a valid 6-digit OTP'});
+          return;
+        }
+
         try {
           Keyboard.dismiss();
-          const credential = auth.PhoneAuthProvider.credential(
-            verificationId,
-            otp.value,
-          );
-          await auth().signInWithCredential(credential);
-          Alert.alert('Phone number verified');
-          setStep(4);
+          if (contactType === 'email') {
+            const resp = await validateOtp({
+              email: contact.value,
+              otp: otp.value,
+            });
+            if (resp.status === 200) {
+              Alert.alert('Email verified');
+            } else {
+              Alert.alert('Invalid OTP, please try again');
+              return;
+            }
+            setTimeout(() => {
+              setStep(3);
+            }, 1000);
+          } else if (contactType === 'phone') {
+            const credential = auth.PhoneAuthProvider.credential(
+              verificationId,
+              otp.value,
+            );
+            await auth().signInWithCredential(credential);
+            Alert.alert('Phone number verified');
+            setStep(3);
+          }
         } catch (error) {
           Alert.alert('Invalid OTP, please try again');
+          return;
         }
         break;
-      case 4: // Validate and complete registration
-        const emailError = emailValidator(email.value);
+      case 3: // Prompt user for first name, last name, and password
+        const firstNameError = firstNameValidator(firstName.value);
+        const lastNameError = lastNameValidator(lastName.value);
         const passwordError = passwordValidator(password.value);
-        if (emailError || passwordError) {
-          setEmail({...email, error: emailError});
+        if (firstNameError || lastNameError || passwordError) {
+          setFirstName({...firstName, error: firstNameError});
+          setLastName({...lastName, error: lastNameError});
           setPassword({...password, error: passwordError});
           return;
         }
-        Keyboard.dismiss();
-        await submitForm();
-        // Register user here
-        navigation.reset({index: 0, routes: [{name: navigationStrings.AUTH}]});
+        setStep(4);
+        break;
+      case 4: // Prompt for the other contact method
+        if (contactType === 'email') {
+          const phoneError = phoneValidator(phone.value);
+          if (phoneError) {
+            setPhone({...phone, error: phoneError});
+            return;
+          }
+          setLoading(true);
+          const confirmation = await auth().signInWithPhoneNumber(phone.value);
+          setVerificationId(confirmation.verificationId);
+          setLoading(false);
+          ToastAndroid.show('OTP sent to your phone', ToastAndroid.SHORT);
+          setStep(5);
+        } else if (contactType === 'phone') {
+          const emailError = emailValidator(contact.value);
+          if (emailError) {
+            setContact({...contact, error: emailError});
+            return;
+          }
+          const resp = await generateEmailOtp(contact.value);
+          console.log('resp', resp);
+          setLoading(true);
+          setTimeout(() => {
+            setLoading(false);
+            Alert.alert('OTP sent to your email');
+            setStep(6);
+          }, 1000);
+        }
+        break;
+      case 5:
+        const otpError2 = otpValidator(otp.value);
+        if (otpError2) {
+          setOtp({...otp, error: otpError2});
+          return;
+        }
+        try {
+          Keyboard.dismiss();
+          if (contactType === 'email') {
+            const resp = await validateOtp({
+              email: contact.value,
+              otp: otp.value,
+            });
+            if (resp.status === 200) {
+              Alert.alert('Email verified');
+            } else {
+              Alert.alert('Invalid OTP, please try again');
+              return;
+            }
+            setTimeout(async () => {
+              await submitForm();
+              navigation.reset({
+                index: 0,
+                routes: [{name: navigationStrings.AUTH}],
+              });
+            }, 1000);
+          } else if (contactType === 'phone') {
+            const credential = auth.PhoneAuthProvider.credential(
+              verificationId,
+              otp.value,
+            );
+            await auth().signInWithCredential(credential);
+            await submitForm();
+            navigation.reset({
+              index: 0,
+              routes: [{name: navigationStrings.AUTH}],
+            });
+          }
+        } catch (error) {
+          Alert.alert('Invalid OTP, please try again');
+        }
         break;
       default:
         break;
@@ -149,7 +294,7 @@ export default function RegisterScreen({navigation}) {
       firstName: firstName.value,
       lastName: lastName.value,
       phone: phone.value,
-      email: email.value,
+      email: contactType === 'email' ? contact.value : email.value,
       password: password.value,
       isMobileAccess: true,
     };
@@ -167,13 +312,83 @@ export default function RegisterScreen({navigation}) {
   const selectCountry = phoneCode => {
     setPhone({value: phoneCode, error: ''});
   };
-
+  const onResendOtp = async () => {
+    setCanResend(false);
+    startResendCountdown();
+    if (contactType === 'email') {
+      const resp = await generateEmailOtp(contact.value);
+      if (resp.status === 200) {
+        ToastAndroid.show('OTP resent to your email', ToastAndroid.LONG);
+      } else {
+        Alert.alert('Error resending OTP. Please try again.');
+      }
+    } else if (contactType === 'phone') {
+      const confirmation = await auth().signInWithPhoneNumber(contact.value);
+      setVerificationId(confirmation.verificationId);
+      ToastAndroid.show('OTP resent to your phone', ToastAndroid.LONG);
+    }
+  };
+  const startResendCountdown = () => {
+    setResendCountdown(10);
+    const interval = setInterval(() => {
+      setResendCountdown(prevCountdown => {
+        if (prevCountdown <= 1) {
+          clearInterval(interval);
+          setCanResend(true);
+        }
+        return prevCountdown - 1;
+      });
+    }, 1000);
+  };
   return (
     <Background>
       <BackButton goBack={navigation.goBack} />
       <Logo />
       <ComponentHeader>Create Account</ComponentHeader>
       {step === 1 && (
+        <TextInput
+          label="Email or Phone"
+          returnKeyType="next"
+          value={contact.value}
+          onChangeText={text => setContact({value: text, error: ''})}
+          error={!!contact.error}
+          errorText={contact.error}
+          autoCapitalize="none"
+          autoCompleteType="email"
+        />
+      )}
+      {loading && (
+        <View style={styles.loader}>
+          <ActivityIndicator size="large" color={COLORS.dark} />
+        </View>
+      )}
+      {step === 2 && (
+        <>
+          <Text style={styles.otpLabel}>Enter OTP</Text>
+          <OtpInputs
+            autofillFromClipboard
+            autofillListenerIntervalMS={400}
+            autoFocus
+            handleChange={code => setOtp({value: code, error: ''})}
+            numberOfInputs={6}
+            style={styles.otpContainer}
+            inputStyles={styles.otpInput}
+          />
+          {!!otp.error && <Text style={styles.errorText}>{otp.error}</Text>}
+          <View style={styles.resendContainer}>
+            <Text>Resend OTP in {resendCountdown} seconds</Text>
+            <TouchableOpacity
+              onPress={onResendOtp}
+              disabled={!canResend}
+              style={styles.resendButton}>
+              <Text style={{color: canResend ? COLORS.primary : COLORS.gray}}>
+                Resend OTP
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
+      {step === 3 && (
         <>
           <TextInput
             label="First Name"
@@ -191,16 +406,40 @@ export default function RegisterScreen({navigation}) {
             error={!!lastName.error}
             errorText={lastName.error}
           />
+          <TextInput
+            label="Password"
+            returnKeyType="done"
+            value={password.value}
+            onChangeText={text => setPassword({value: text, error: ''})}
+            error={!!password.error}
+            errorText={password.error}
+            secureTextEntry
+          />
         </>
       )}
-      {step === 2 && (
+      {step === 4 && (
         <>
-          <RNPickerSelect
-            onValueChange={value => selectCountry(value)}
-            items={countries}
-            placeholder={{label: 'Uganda UG (+256)', value: null}}
-            style={pickerSelectStyles}
-          />
+          {contactType === 'email' ? (
+            <RNPickerSelect
+              onValueChange={value => selectCountry(value)}
+              items={countries}
+              placeholder={{label: 'Uganda UG (+256)', value: null}}
+              style={pickerSelectStyles}
+            />
+          ) : (
+            <TextInput
+              label="Email"
+              returnKeyType="next"
+              value={contact.value}
+              onChangeText={text => setContact({value: text, error: ''})}
+              error={!!contact.error}
+              errorText={contact.error}
+              autoCapitalize="none"
+              autoCompleteType="email"
+              textContentType="emailAddress"
+              keyboardType="email-address"
+            />
+          )}
           <TextInput
             label="Phone"
             returnKeyType="next"
@@ -212,14 +451,9 @@ export default function RegisterScreen({navigation}) {
             autoCompleteType="tel"
             keyboardType="phone-pad"
           />
-          {loading && (
-            <View style={styles.loader}>
-              <ActivityIndicator size="large" color={COLORS.dark} />
-            </View>
-          )}
         </>
       )}
-      {step === 3 && (
+      {step === 5 && (
         <>
           <Text style={styles.otpLabel}>Enter OTP</Text>
           <OtpInputs
@@ -232,31 +466,18 @@ export default function RegisterScreen({navigation}) {
             inputStyles={styles.otpInput}
           />
           {!!otp.error && <Text style={styles.errorText}>{otp.error}</Text>}
-        </>
-      )}
-      {step === 4 && (
-        <>
-          <TextInput
-            label="Email"
-            returnKeyType="next"
-            value={email.value}
-            onChangeText={text => setEmail({value: text, error: ''})}
-            error={!!email.error}
-            errorText={email.error}
-            autoCapitalize="none"
-            autoCompleteType="email"
-            textContentType="emailAddress"
-            keyboardType="email-address"
-          />
-          <TextInput
-            label="Password"
-            returnKeyType="done"
-            value={password.value}
-            onChangeText={text => setPassword({value: text, error: ''})}
-            error={!!password.error}
-            errorText={password.error}
-            secureTextEntry
-          />
+
+          <View style={styles.resendContainer}>
+            <Text>Resend OTP in {resendCountdown} seconds</Text>
+            <TouchableOpacity
+              onPress={onResendOtp}
+              disabled={!canResend}
+              style={styles.resendButton}>
+              <Text style={{color: canResend ? COLORS.primary : COLORS.gray}}>
+                Resend OTP
+              </Text>
+            </TouchableOpacity>
+          </View>
         </>
       )}
       <View style={styles.buttonContainer}>
@@ -275,11 +496,10 @@ export default function RegisterScreen({navigation}) {
             styles.button,
             {width: step === 1 ? '100%' : '49%', marginHorizontal: 4},
           ]}>
-          {step === 4 ? 'Sign Up' : 'Next'}
+          {step === 5 ? 'Sign Up' : step === 2 ? 'Verify OTP' : 'Next'}
         </Button>
       </View>
 
-      {/* {step !== 1 && ( */}
       <View style={styles.row}>
         <Text>Already have an account? </Text>
         <TouchableOpacity
@@ -287,7 +507,6 @@ export default function RegisterScreen({navigation}) {
           <Text style={styles.link}>Login</Text>
         </TouchableOpacity>
       </View>
-      {/* )} */}
     </Background>
   );
 }
@@ -360,5 +579,14 @@ const styles = StyleSheet.create({
     height: 300,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  resendContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  resendButton: {
+    padding: 8,
   },
 });

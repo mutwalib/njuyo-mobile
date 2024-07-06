@@ -1,5 +1,5 @@
 import {View, Text, Image, TouchableOpacity, Alert} from 'react-native';
-import React from 'react';
+import React, {useEffect} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {FONTS, SIZES, imagePath} from '../../../consts';
 import COLORS from '../../../consts/colors';
@@ -7,12 +7,25 @@ import Icon from '../../../consts/Icon';
 import {useSelector, useDispatch} from 'react-redux';
 import BackHeader from '../../../Navigation/BackHeader';
 import axios from 'axios';
-import {logout} from '../../../store/userSlice'; // Assuming there's a logout action in userSlice
+import {logout} from '../../../store/userSlice';
 import {bURL} from '../../../services/api/api';
+import {roleApplicationStatus} from '../../../store/roleApplicationStatusSlice';
+import {applyForAgentRole} from '../../../services/AuthServices';
+import {Tooltip} from 'react-native-elements';
+import StatBadge from '../../../components/statBadge';
 
 const ProfileScreen = ({navigation}) => {
   const user = useSelector(state => state.user.user);
   const dispatch = useDispatch();
+  const {isApplied, status, error} = useSelector(
+    state => state.applicationStatus,
+  );
+
+  useEffect(() => {
+    if (user && user.id) {
+      dispatch(roleApplicationStatus(user.id));
+    }
+  }, [dispatch, user]);
 
   const handleEditProfile = () => {
     navigation.navigate('edit_profile');
@@ -56,12 +69,35 @@ const ProfileScreen = ({navigation}) => {
         'Error',
         'There was an issue deleting your account. Please try again.',
       );
-    } 
-    // finally {
-    //   Linking.openURL('https://njuyo.com/delete-account');
-    // }
+    }
   };
-  
+
+  const handleApplyForOwner = async () => {
+    try {
+      const data = {
+        userId: user.id,
+        roleName: 'OWNER',
+      };
+      const response = await applyForAgentRole(data);
+      console.log(response);
+      if (response.status === 200) {
+        dispatch(roleApplicationStatus(user.id));
+        Alert.alert(response._response);
+      } else {
+        Alert.alert(
+          'Error',
+          'There was an issue submitting your application. Please try again.',
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert(
+        'Error',
+        'There was an issue submitting your application. Please try again.',
+      );
+    }
+  };
+
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: COLORS.white}}>
       <BackHeader navigation={navigation} title={`Profile`} />
@@ -77,8 +113,8 @@ const ProfileScreen = ({navigation}) => {
           source={imagePath.icProfile}
           resizeMode="contain"
           style={{
-            height: 155,
-            width: 155,
+            height: 130,
+            width: 130,
             borderRadius: 999,
             borderColor: COLORS.primary,
             borderWidth: 2,
@@ -111,66 +147,58 @@ const ProfileScreen = ({navigation}) => {
           </Text>
         </View>
         <View style={{flexDirection: 'row'}}>
-          <View
-            style={{
-              flexDirection: 'column',
-              alignItems: 'center',
-              marginHorizontal: SIZES.padding,
-            }}>
-            <Text style={{...FONTS.h2, color: COLORS.primary}}>0</Text>
-            <Text style={{...FONTS.body4, color: COLORS.primary}}>Rented</Text>
-          </View>
-          <View
-            style={{
-              flexDirection: 'column',
-              alignItems: 'center',
-              marginHorizontal: SIZES.padding,
-            }}>
-            <Text style={{...FONTS.h2, color: COLORS.primary}}>67</Text>
-            <Text style={{...FONTS.body4, color: COLORS.primary}}>Bought</Text>
-          </View>
+          {!user.roles.includes('OWNER') &&
+            (isApplied ? (
+              <Text
+                style={{
+                  width: '90%',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: COLORS.gray,
+                }}>
+                You applied to be an agent, Your application is pending approval
+              </Text>
+            ) : (
+              <View
+                style={{
+                  flexDirection: 'column',
+                  marginHorizontal: SIZES.padding,
+                  alignItems: 'center',
+                }}>
+                <TouchableOpacity
+                  style={{
+                    width: 124,
+                    height: 36,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: COLORS.blue,
+                    borderRadius: 10,
+                    marginHorizontal: SIZES.padding * 2,
+                  }}
+                  onPress={handleApplyForOwner}>
+                  <Text style={{...FONTS.body4, color: COLORS.white}}>
+                    Apply as OWNER
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+        </View>
+        <View style={{flexDirection: 'row'}}>
+          <StatBadge number="0" label="Rented" />
+          <StatBadge number="3" label="Bought" />
           {user.roles && user.roles.includes('OWNER') && (
             <>
-              <View
-                style={{
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  marginHorizontal: SIZES.padding,
-                }}>
-                <Text style={{...FONTS.h2, color: COLORS.primary}}>0</Text>
-                <Text style={{...FONTS.body4, color: COLORS.primary}}>
-                  My Rentals
-                </Text>
-              </View>
-              <View
-                style={{
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  marginHorizontal: SIZES.padding,
-                }}>
-                <Text style={{...FONTS.h2, color: COLORS.primary}}>0</Text>
-                <Text style={{...FONTS.body4, color: COLORS.primary}}>
-                  My Land
-                </Text>
-              </View>
-              <View
-                style={{
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  marginHorizontal: SIZES.padding,
-                }}>
-                <Text style={{...FONTS.h2, color: COLORS.primary}}>0</Text>
-                <Text style={{...FONTS.body4, color: COLORS.primary}}>
-                  My Hostels
-                </Text>
-              </View>
+              <StatBadge number="0" label="My Rentals" />
+              <StatBadge number="0" label="My Land" />
+              <StatBadge number="0" label="My Hostels" />
             </>
           )}
         </View>
-        <View style={{flexDirection: 'row', marginTop: 50}}>
+        <View
+          style={{flexDirection: 'row', marginTop: 50, paddingHorizontal: 10}}>
           <TouchableOpacity
             style={{
-              width: 124,
+              width: 70,
               height: 36,
               alignItems: 'center',
               justifyContent: 'center',
@@ -179,13 +207,13 @@ const ProfileScreen = ({navigation}) => {
               marginHorizontal: SIZES.padding * 2,
             }}
             onPress={handleEditProfile}>
-            <Text style={{...FONTS.body4, color: COLORS.white}}>
-              Edit Profile
-            </Text>
+            <Tooltip popover={<Text>Edit Profile</Text>}>
+              <Icon type="fa" name="edit" size={20} color={COLORS.white} />
+            </Tooltip>
           </TouchableOpacity>
           <TouchableOpacity
             style={{
-              width: 124,
+              width: 70,
               height: 36,
               alignItems: 'center',
               justifyContent: 'center',
@@ -194,15 +222,13 @@ const ProfileScreen = ({navigation}) => {
               marginHorizontal: SIZES.padding * 2,
             }}
             onPress={handleChangePassword}>
-            <Text style={{...FONTS.body4, color: COLORS.white}}>
-              Change Password
-            </Text>
+            <Tooltip popover={<Text>Change Password</Text>}>
+              <Icon type="fa" name="lock" size={20} color={COLORS.white} />
+            </Tooltip>
           </TouchableOpacity>
-        </View>
-        <View style={{flexDirection: 'row', marginTop: 40}}>
           <TouchableOpacity
             style={{
-              width: 124,
+              width: 70,
               height: 36,
               alignItems: 'center',
               justifyContent: 'center',
@@ -211,9 +237,9 @@ const ProfileScreen = ({navigation}) => {
               marginHorizontal: SIZES.padding * 2,
             }}
             onPress={handleDeleteAccount}>
-            <Text style={{...FONTS.body4, color: COLORS.white}}>
-              Delete Account
-            </Text>
+            <Tooltip popover={<Text>Delete Account</Text>}>
+              <Icon type="fa" name="trash" size={20} color={COLORS.white} />
+            </Tooltip>
           </TouchableOpacity>
         </View>
       </View>

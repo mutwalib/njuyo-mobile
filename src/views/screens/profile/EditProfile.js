@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,17 +8,18 @@ import {
   StyleSheet,
   BackHandler,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {COLORS, FONTS, imagePath} from '../../../consts';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { COLORS, FONTS } from '../../../consts';
 import BackHeader from '../../../Navigation/BackHeader';
-import {useSelector} from 'react-redux';
+import { useSelector } from 'react-redux';
 
-const EditProfile = ({navigation}) => {
+const EditProfile = ({ navigation }) => {
   const user = useSelector(state => state.user.user);
   const [firstName, setFirstName] = useState(user ? user.firstName : '');
   const [lastName, setLastName] = useState(user ? user.lastName : '');
   const [email, setEmail] = useState(user ? user.email : '');
   const [phone, setPhone] = useState(user ? user.phone : '');
+
   useEffect(() => {
     const backAction = () => {
       navigation.goBack();
@@ -26,13 +27,14 @@ const EditProfile = ({navigation}) => {
     };
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
-      backAction,
+      backAction
     );
     return () => backHandler.remove();
   }, []);
+
   return (
     <SafeAreaView style={styles.container}>
-      <BackHeader navigation={navigation} title={`Edit Profile`} />
+      <BackHeader navigation={navigation} title="Edit Profile" />
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.avatarContainer}>
           {/* Your Avatar Component */}
@@ -45,7 +47,7 @@ const EditProfile = ({navigation}) => {
                 value={firstName}
                 onChangeText={value => setFirstName(value)}
                 style={styles.textInput}
-                editable={true}
+                editable={false}
               />
             </View>
           </View>
@@ -56,7 +58,7 @@ const EditProfile = ({navigation}) => {
                 value={lastName}
                 onChangeText={value => setLastName(value)}
                 style={styles.textInput}
-                editable={true}
+                editable={false}
               />
             </View>
           </View>
@@ -67,7 +69,7 @@ const EditProfile = ({navigation}) => {
                 value={email}
                 onChangeText={value => setEmail(value)}
                 style={styles.textInput}
-                editable={true}
+                editable={false}
               />
             </View>
           </View>

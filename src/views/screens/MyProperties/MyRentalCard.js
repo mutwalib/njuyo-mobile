@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback} from 'react';
+import React, {useEffect} from 'react';
 import {View, TouchableOpacity, Text, StyleSheet} from 'react-native';
 import {
   getBookingsOnRental,
@@ -6,7 +6,7 @@ import {
 } from '../../../services/RentalService';
 import {useNavigation} from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchBookingsOnRental } from '../../../store/bookingsOnRental';
+import { fetchBookingsOnRental } from '../../../store/bookingsOnRentalSlice';
 
 const MyRentalCard = ({item}) => {
   const navigation = useNavigation();

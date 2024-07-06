@@ -22,6 +22,7 @@ import LoginScreen from '../views/screens/auth/LoginScreen';
 import ProfileScreen from '../views/screens/profile/ProfileScreen';
 import ChangePassword from '../views/screens/profile/ChangePassword';
 import EditProfile from '../views/screens/profile/EditProfile';
+import ResetPasswordScreen from '../views/screens/auth/ResetPasswordScreen';
 
 const Stack = createStackNavigator();
 const StartStack = () => {
@@ -75,6 +76,10 @@ const StartStack = () => {
         component={RegisterScreen}
       />
       <Stack.Screen name={navigationStrings.SIGNIN} component={LoginScreen} />
+      <Stack.Screen
+        name={navigationStrings.RESETPASS}
+        component={ResetPasswordScreen}
+      />
       <Stack.Screen name="profile" component={ProfileScreen} />
       <Stack.Screen name="change_pwd" component={ChangePassword} />
       <Stack.Screen name="edit_profile" component={EditProfile} />

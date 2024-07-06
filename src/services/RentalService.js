@@ -168,9 +168,6 @@ export const scheduleAppointment = async appointmentData => {
 };
 export const cancelAppointment = async bookId => {
   console.log('bookingId', bookId);
-  // const response = await axiosClient.delete(
-  //   `/booking/rental/appointment/delete/${bookId}`,
-  // );
   return axiosClient
     .delete(`/booking/rental/appointment/delete/${bookId}`)
     .then(response => {

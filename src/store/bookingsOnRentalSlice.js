@@ -8,7 +8,7 @@ export const fetchBookingsOnRental = createAsyncThunk(
   }
 );
 
-const bookingsSlice = createSlice({
+const bookingsOnRentalSlice = createSlice({
   name: 'bookingsOnRental',
   initialState: {
     rentalBookings: {},
@@ -32,4 +32,4 @@ const bookingsSlice = createSlice({
   },
 });
 
-export default bookingsSlice.reducer;
+export default bookingsOnRentalSlice.reducer;

@@ -52,13 +52,14 @@ export const registerUser = async data => {
       return error;
     });
 };
-export const applyForAgentRole = async ({userId, roleName}) => {
+export const applyForAgentRole = async data => {
+  console.log('data', data);
   return await axiosClient.post(
     `/users/apply-role`,
-    {
-      userId: userId,
-      roleName: roleName,
-    },
+    JSON.stringify({
+      userId: data.userId,
+      roleName: data.roleName,
+    }),
     {
       headers: {
         Accept: 'application/json',
@@ -137,8 +138,9 @@ export const handleGoogleLogin = async googleData => {
 };
 export const forgotPassword = async email => {
   try {
-    debugger;
-    const response = await axiosClient.post(`/auth/forgot-password`, {email});
+    const response = await axiosClient.post(`/auth/forgot-password`, {
+      email: email,
+    });
     return response;
   } catch (error) {
     return console.error();
@@ -172,5 +174,33 @@ export const updatePassword = async data => {
     return response;
   } catch (error) {
     return console.error();
+  }
+};
+export const checkEmailPhoneExistence = async email => {
+  try {
+    const response = await axiosClient.get(`/users/email-phone-exist/${email}`);
+    return response;
+  } catch (error) {
+    return error;
+  }
+};
+export const generateEmailOtp = async email => {
+  try {
+    const response = await axiosClient.post(
+      `/auth/generate-email-otp/${email}`,
+    );
+    return response;
+  } catch (error) {
+    return error;
+  }
+};
+export const validateOtp = async ({email, otp}) => {
+  try {
+    const response = await axiosClient.post(
+      `/auth/validate-email-otp/${email}/${otp}`,
+    );
+    return response;
+  } catch (error) {
+    return error;
   }
 };

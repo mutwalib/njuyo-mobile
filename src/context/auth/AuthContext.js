@@ -70,7 +70,7 @@ const login =
   async ({email, password}) => {
     try {
       const response = await axios.post(
-        'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyCPrUOcTWvUSZ4n5kuTSier5YFuF2DfgQY',
+        '',
         {email, password, returnSecureToken: true},
         {
           headers: {
